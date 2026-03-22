@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Burst - Compteur de points</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#111827;
+      --card:#1f2937;
+      --border:#334155;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --accent:#22c55e;
+      --danger:#ef4444;
+      --neutral:#334155;
+      --radius:16px;
+      --tap:40px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;
+      min-height:100%;
+      background:linear-gradient(180deg,#07101c 0%, #0f172a 45%, #111827 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      overflow-x:hidden;
+    }
+    body{min-height:100dvh}
+
+    .app{
+      width:min(1200px,100%);
+      margin:0 auto;
+      padding:clamp(8px,1.5vw,16px);
+      display:flex;
+      flex-direction:column;
+      gap:clamp(8px,1.2vw,14px);
+    }
+
+    .section{
+      background:rgba(17,24,39,.95);
+      border:1px solid rgba(51,65,85,.9);
+      border-radius:var(--radius);
+      padding:clamp(10px,1.4vw,16px);
+      box-shadow:0 12px 30px rgba(0,0,0,.25);
+    }
+
+    h1,h2{margin:0 0 10px 0; line-height:1.15}
+    h1{font-size:clamp(1.1rem,1rem + 1vw,1.55rem)}
+    h2{font-size:clamp(1rem,.95rem + .75vw,1.25rem)}
+    .hidden{display:none !important}
+
+    .setup{
+      display:grid;
+      gap:12px;
+    }
+    .setup-row{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:center;
+      gap:10px;
+    }
+    label{color:var(--muted); font-weight:600}
+    input,select,button{font:inherit}
+
+    .field,.round-input,.setup-row select,.setup-row input{
+      min-height:var(--tap);
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:var(--bg);
+      color:var(--text);
+      padding:10px 12px;
+      outline:none;
+    }
+
+    .btn{
+      min-height:var(--tap);
+      border:none;
+      border-radius:12px;
+      padding:10px 14px;
+      color:white;
+      font-weight:800;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    .btn-primary{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
+    .btn-success{background:linear-gradient(135deg,#16a34a,#15803d)}
+    .btn-danger{background:linear-gradient(135deg,#dc2626,#b91c1c)}
+    .btn-neutral{background:#475569}
+
+    .player-name-inputs{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:10px;
+    }
+
+    .layout-play{display:grid; gap:12px}
+    .top-area{
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);
+      gap:12px;
+      align-items:start;
+    }
+
+    .river-panel,.scores-panel,.winner-panel{
+      background:rgba(15,23,42,.72);
+      border:1px solid rgba(51,65,85,.95);
+      border-radius:var(--radius);
+      padding:12px;
+    }
+
+    .topbar,.scores-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(2,6,23,.35);
+      border:1px solid rgba(51,65,85,.95);
+      font-weight:800;
+      user-select:none;
+      touch-action:manipulation;
+    }
+
+    .total-box{
+      min-width:110px;
+      padding:10px 14px;
+      border-radius:14px;
+      background:linear-gradient(135deg,#1d4ed8,#0f766e);
+      color:white;
+      font-size:clamp(1.3rem,1rem + 1.2vw,1.9rem);
+      font-weight:900;
+      text-align:center;
+    }
+
+    .river{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      min-height:60px;
+      max-height:clamp(110px,18vh,150px);
+      overflow:auto;
+      padding:8px;
+      border-radius:14px;
+      background:rgba(2,6,23,.35);
+      border:1px dashed rgba(51,65,85,.9);
+    }
+
+    .river-card{
+      min-width:46px;
+      min-height:36px;
+      display:grid;
+      place-items:center;
+      padding:0 10px;
+      border-radius:10px;
+      background:linear-gradient(180deg,#334155,#1f2937);
+      border:1px solid rgba(148,163,184,.15);
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+
+    .controls{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(42px,1fr));
+      gap:6px;
+      margin-top:10px;
+    }
+
+    .value-btn{
+      min-height:38px;
+      border:none;
+      border-radius:10px;
+      background:#334155;
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+
+    .game-status{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(2,6,23,.35);
+      color:#dbe4f0;
+      line-height:1.35;
+      flex:1;
+      min-width:220px;
+    }
+
+    .players-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+      gap:10px;
+    }
+
+    .player-card{
+      background:rgba(2,6,23,.24);
+      border:1px solid rgba(51,65,85,.95);
+      border-radius:14px;
+      padding:10px;
+    }
+
+    .player-name{
+      font-size:1rem;
+      font-weight:900;
+      margin-bottom:6px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .player-score{
+      font-size:clamp(1.4rem,1rem + 1vw,1.9rem);
+      font-weight:900;
+      margin-bottom:8px;
+      color:#fff;
+    }
+
+    .round-row{
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:6px;
+      align-items:center;
+    }
+
+    .round-input{
+      width:100%;
+      text-align:center;
+      font-weight:700;
+      min-width:0;
+    }
+
+    .small-btn{
+      min-height:36px;
+      min-width:36px;
+      padding:0 10px;
+      border-radius:10px;
+      border:none;
+      cursor:pointer;
+      color:#fff;
+      font-weight:900;
+      line-height:1;
+      touch-action:manipulation;
+    }
+    .small-add{background:var(--accent)}
+    .small-sub{background:var(--danger)}
+
+    .winner-panel{
+      display:grid;
+      gap:10px;
+    }
+    .winner-title{
+      font-size:1.05rem;
+      font-weight:900;
+      color:#dcfce7;
+    }
+    .winner-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    @media (max-width:900px){
+      .top-area{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .app{padding:8px; gap:8px}
+      .section{padding:10px}
+      .players-grid{grid-template-columns:1fr}
+      .controls{grid-template-columns:repeat(6,minmax(0,1fr))}
+      .river{max-height:110px}
+      .round-row{grid-template-columns:1fr auto auto}
+    }
+    @media (max-height:820px) and (min-width:700px){
+      .river{max-height:95px}
+      .players-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+    }
+	.river-total-hot {
+  color: #ef4444;
+  font-size: 3em;
+  font-weight: 900;
+  animation: riverShake 0.18s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes riverShake {
+  0%   { transform: translateX(0px) rotate(0deg); }
+  25%  { transform: translateX(-1px) rotate(-0.4deg); }
+  50%  { transform: translateX(1px) rotate(0.4deg); }
+  75%  { transform: translateX(-1px) rotate(0deg); }
+  100% { transform: translateX(0px) rotate(0deg); }
+}
+	
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="section" id="setupSection">
+      <h1>Burst - Compteur de points</h1>
+      <div class="setup">
+        <div class="setup-row">
+          <label for="playerCount">Nombre de joueurs :</label>
+          <select id="playerCount">
+            <option value="3">3</option>
+            <option value="4" selected>4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+          </select>
+          <button class="btn btn-primary" id="createPlayersBtn">Créer les joueurs</button>
+        </div>
+        <div class="player-name-inputs" id="playerNameInputs"></div>
+        <div class="setup-row">
+          <button class="btn btn-success" id="startGameBtn">Démarrer la partie</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout-play hidden" id="gameView">
+      <div class="top-area">
+        <div class="river-panel">
+          <div class="topbar">
+            <h2>Rivière de défausse</h2>
+            <div class="pill" id="roundPill">Manche <span id="roundNumber">1</span></div>
+            <div class="total-box" id="riverTotal">0</div>
+          </div>
+          <div class="river" id="river"></div>
+          <div class="controls" id="valueButtons"></div>
+        </div>
+
+        <div class="winner-panel hidden" id="winnerPanel">
+          <div class="winner-title" id="winnerText"></div>
+          <div class="winner-actions">
+            <button class="btn btn-success" id="restartSameBtn">Recommencer avec les mêmes joueurs</button>
+            <button class="btn btn-neutral" id="backHomeBtn">Revenir à l’accueil</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="scores-panel">
+        <div class="scores-header">
+          <h2>Scores des joueurs</h2>
+          <div class="game-status" id="gameStatus">La partie est en cours.</div>
+        </div>
+        <div class="players-grid" id="playersGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const playerCount = document.getElementById('playerCount');
+    const createPlayersBtn = document.getElementById('createPlayersBtn');
+    const startGameBtn = document.getElementById('startGameBtn');
+    const playerNameInputs = document.getElementById('playerNameInputs');
+    const setupSection = document.getElementById('setupSection');
+    const gameView = document.getElementById('gameView');
+    const river = document.getElementById('river');
+    const riverTotal = document.getElementById('riverTotal');
+    const valueButtons = document.getElementById('valueButtons');
+    const playersGrid = document.getElementById('playersGrid');
+    const gameStatus = document.getElementById('gameStatus');
+    const winnerPanel = document.getElementById('winnerPanel');
+    const winnerText = document.getElementById('winnerText');
+    const restartSameBtn = document.getElementById('restartSameBtn');
+    const backHomeBtn = document.getElementById('backHomeBtn');
+    const roundPill = document.getElementById('roundPill');
+    const roundNumber = document.getElementById('roundNumber');
+
+    const values = Array.from({length:18}, (_, i) => i - 2);
+
+    let players = [];
+    let riverCards = [];
+    let gameOver = false;
+    let round = 1;
+
+    function renderPlayerInputs() {
+      const count = parseInt(playerCount.value, 10);
+      playerNameInputs.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = `Joueur ${i + 1}`;
+        input.value = `Joueur ${i + 1}`;
+        input.id = `playerName${i}`;
+        playerNameInputs.appendChild(input);
+      }
+    }
+
+    function renderValueButtons() {
+      valueButtons.innerHTML = '';
+      values.forEach(v => {
+        const btn = document.createElement('button');
+        btn.className = 'value-btn';
+        btn.type = 'button';
+        btn.textContent = v;
+        btn.onclick = () => addCardToRiver(v);
+        valueButtons.appendChild(btn);
+      });
+    }
+
+	function updateRiver() {
+	river.innerHTML = '';
+	
+	riverCards.forEach((card, index) => {
+		const el = document.createElement('button');
+		el.className = 'river-card';
+		el.type = 'button';
+		el.textContent = card;
+		el.onclick = () => {
+		if (gameOver) return;
+		riverCards.splice(index, 1);
+		updateRiver();
+		};
+		river.appendChild(el);
+	});
+	
+	const total = riverCards.reduce((a, b) => a + b, 0);
+	riverTotal.textContent = total;
+	riverTotal.classList.toggle('river-total-hot', total > 21);
+	}
+
+    function addCardToRiver(value) {
+      if (gameOver) return;
+      riverCards.push(value);
+      updateRiver();
+    }
+
+    function renderPlayers() {
+      playersGrid.innerHTML = '';
+      players.forEach((player, index) => {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+        card.innerHTML = `
+          <div class="player-name" title="${player.name}">${player.name}</div>
+          <div class="player-score" id="score-${index}">${player.score}</div>
+          <div class="round-row">
+            <input class="round-input" type="number" step="1" id="round-${index}" placeholder="Points">
+            <button class="small-btn small-add" type="button" onclick="addRoundPoints(${index})">+</button>
+            <button class="small-btn small-sub" type="button" onclick="subtractRoundPoints(${index})">-</button>
+          </div>
+        `;
+        playersGrid.appendChild(card);
+      });
+    }
+
+    function updateScores() {
+      players.forEach((p, i) => {
+        const el = document.getElementById(`score-${i}`);
+        if (el) el.textContent = p.score;
+      });
+    }
+
+    function getRoundValue(index) {
+      const input = document.getElementById(`round-${index}`);
+      const value = parseInt(input.value, 10);
+      if (Number.isNaN(value)) return null;
+      input.value = '';
+      return value;
+    }
+
+    function checkWinnerAtEndOfRound() {
+      const eligible = players.filter(p => p.score >= 100);
+      if (!eligible.length) return false;
+      const winner = players.reduce((best, cur) => cur.score > best.score ? cur : best, players[0]);
+      gameOver = true;
+      winnerPanel.classList.remove('hidden');
+      winnerText.textContent = `Partie terminée. Gagnant : ${winner.name} avec ${winner.score} points.`;
+      gameStatus.textContent = 'La partie est terminée.';
+      return true;
+    }
+
+    window.addRoundPoints = function(index) {
+      if (gameOver) return;
+      const value = getRoundValue(index);
+      if (value === null) return;
+      players[index].score += value;
+      updateScores();
+    };
+
+    window.subtractRoundPoints = function(index) {
+      if (gameOver) return;
+      const value = getRoundValue(index);
+      if (value === null) return;
+      players[index].score -= value;
+      updateScores();
+    };
+
+    function nextRound() {
+      if (gameOver) return;
+      if (checkWinnerAtEndOfRound()) return;
+      round += 1;
+      roundNumber.textContent = round;
+      gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
+    }
+
+    function startFromSetup() {
+      const count = parseInt(playerCount.value, 10);
+      players = [];
+      for (let i = 0; i < count; i++) {
+        const name = document.getElementById(`playerName${i}`).value.trim() || `Joueur ${i + 1}`;
+        players.push({ name, score: 0 });
+      }
+      riverCards = [];
+      gameOver = false;
+      round = 1;
+      roundNumber.textContent = round;
+
+      setupSection.classList.add('hidden');
+      gameView.classList.remove('hidden');
+      winnerPanel.classList.add('hidden');
+      gameStatus.textContent = 'La partie est en cours.';
+      renderValueButtons();
+      updateRiver();
+      renderPlayers();
+      updateScores();
+    }
+
+    function restartSamePlayers() {
+      players = players.map(p => ({ name: p.name, score: 0 }));
+      riverCards = [];
+      gameOver = false;
+      round = 1;
+      roundNumber.textContent = round;
+      winnerPanel.classList.add('hidden');
+      gameStatus.textContent = 'La partie est relancée avec les mêmes joueurs.';
+      updateRiver();
+      renderPlayers();
+      updateScores();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function backHome() {
+      players = [];
+      riverCards = [];
+      gameOver = false;
+      round = 1;
+      roundNumber.textContent = round;
+      winnerPanel.classList.add('hidden');
+      gameView.classList.add('hidden');
+      setupSection.classList.remove('hidden');
+      updateRiver();
+      renderPlayerInputs();
+      playerNameInputs.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    createPlayersBtn.onclick = renderPlayerInputs;
+    startGameBtn.onclick = startFromSetup;
+    restartSameBtn.onclick = restartSamePlayers;
+    backHomeBtn.onclick = backHome;
+    roundPill.onclick = nextRound;
+
+    renderPlayerInputs();
+    renderValueButtons();
+    updateRiver();
+  </script>
+</body>
+</html>
