@@ -18,7 +18,6 @@
       --radius:16px;
       --tap:40px;
     }
-
     *{box-sizing:border-box}
     html,body{
       margin:0;
@@ -29,7 +28,6 @@
       overflow-x:hidden;
     }
     body{min-height:100dvh}
-
     .app{
       width:min(1200px,100%);
       margin:0 auto;
@@ -38,7 +36,6 @@
       flex-direction:column;
       gap:clamp(8px,1.2vw,14px);
     }
-
     .section{
       background:rgba(17,24,39,.95);
       border:1px solid rgba(51,65,85,.9);
@@ -46,25 +43,14 @@
       padding:clamp(10px,1.4vw,16px);
       box-shadow:0 12px 30px rgba(0,0,0,.25);
     }
-
     h1,h2{margin:0 0 10px 0; line-height:1.15}
     h1{font-size:clamp(1.1rem,1rem + 1vw,1.55rem)}
     h2{font-size:clamp(1rem,.95rem + .75vw,1.25rem)}
     .hidden{display:none !important}
-
-    .setup{
-      display:grid;
-      gap:12px;
-    }
-    .setup-row{
-      display:flex;
-      flex-wrap:wrap;
-      align-items:center;
-      gap:10px;
-    }
+    .setup{display:grid; gap:12px}
+    .setup-row{display:flex; flex-wrap:wrap; align-items:center; gap:10px}
     label{color:var(--muted); font-weight:600}
     input,select,button{font:inherit}
-
     .field,.round-input,.setup-row select,.setup-row input{
       min-height:var(--tap);
       border-radius:12px;
@@ -74,7 +60,6 @@
       padding:10px 12px;
       outline:none;
     }
-
     .btn{
       min-height:var(--tap);
       border:none;
@@ -87,15 +72,12 @@
     }
     .btn-primary{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
     .btn-success{background:linear-gradient(135deg,#16a34a,#15803d)}
-    .btn-danger{background:linear-gradient(135deg,#dc2626,#b91c1c)}
     .btn-neutral{background:#475569}
-
     .player-name-inputs{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
       gap:10px;
     }
-
     .layout-play{display:grid; gap:12px}
     .top-area{
       display:grid;
@@ -103,23 +85,13 @@
       gap:12px;
       align-items:start;
     }
-
     .river-panel,.scores-panel,.winner-panel{
       background:rgba(15,23,42,.72);
       border:1px solid rgba(51,65,85,.95);
       border-radius:var(--radius);
       padding:12px;
     }
-
-    .topbar,.scores-header{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
+    .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
     .pill{
       display:inline-flex;
       align-items:center;
@@ -129,10 +101,9 @@
       background:rgba(2,6,23,.35);
       border:1px solid rgba(51,65,85,.95);
       font-weight:800;
-      user-select:none;
-      touch-action:manipulation;
+      cursor:pointer;
     }
-
+    .pill:hover{background:rgba(51,65,85,.4)}
     .total-box{
       min-width:110px;
       padding:10px 14px;
@@ -143,7 +114,16 @@
       font-weight:900;
       text-align:center;
     }
-
+    .river-total-hot {
+      color: #ef4444 !important;
+      font-size: 1.25em;
+      animation: riverShake 0.18s linear infinite;
+    }
+    @keyframes riverShake {
+      0%,100%{transform:translateX(0)}
+      25%{transform:translateX(-1px)}
+      75%{transform:translateX(1px)}
+    }
     .river{
       display:flex;
       flex-wrap:wrap;
@@ -156,7 +136,6 @@
       background:rgba(2,6,23,.35);
       border:1px dashed rgba(51,65,85,.9);
     }
-
     .river-card{
       min-width:46px;
       min-height:36px;
@@ -171,14 +150,12 @@
       cursor:pointer;
       touch-action:manipulation;
     }
-
     .controls{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(42px,1fr));
       gap:6px;
       margin-top:10px;
     }
-
     .value-btn{
       min-height:38px;
       border:none;
@@ -189,7 +166,6 @@
       cursor:pointer;
       touch-action:manipulation;
     }
-
     .game-status{
       padding:10px 12px;
       border-radius:12px;
@@ -200,20 +176,17 @@
       flex:1;
       min-width:220px;
     }
-
     .players-grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
       gap:10px;
     }
-
     .player-card{
       background:rgba(2,6,23,.24);
       border:1px solid rgba(51,65,85,.95);
       border-radius:14px;
       padding:10px;
     }
-
     .player-name{
       font-size:1rem;
       font-weight:900;
@@ -222,28 +195,24 @@
       text-overflow:ellipsis;
       white-space:nowrap;
     }
-
     .player-score{
       font-size:clamp(1.4rem,1rem + 1vw,1.9rem);
       font-weight:900;
       margin-bottom:8px;
       color:#fff;
     }
-
     .round-row{
       display:grid;
       grid-template-columns:1fr auto auto;
       gap:6px;
       align-items:center;
     }
-
     .round-input{
       width:100%;
       text-align:center;
       font-weight:700;
       min-width:0;
     }
-
     .small-btn{
       min-height:36px;
       min-width:36px;
@@ -258,11 +227,57 @@
     }
     .small-add{background:var(--accent)}
     .small-sub{background:var(--danger)}
-
-    .winner-panel{
-      display:grid;
-      gap:10px;
+    .leaderboard-section{
+      background:rgba(15,23,42,.8);
+      border:1px solid rgba(34,197,94,.3);
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:12px;
     }
+    .leaderboard-title{
+      font-size:.95rem;
+      font-weight:900;
+      color:var(--accent);
+      margin-bottom:6px;
+      text-align:center;
+    }
+    .leaderboard-grid{
+      display:grid;
+      gap:3px;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+    }
+    .leaderboard-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:5px 8px;
+      background:rgba(34,197,94,.12);
+      border-radius:8px;
+      font-size:.88rem;
+      font-weight:700;
+    }
+    .leaderboard-rank{
+      color:var(--accent);
+      width:20px;
+      text-align:center;
+      font-weight:900;
+      font-size:.9rem;
+    }
+    .leaderboard-name{
+      flex:1;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      padding-left:4px;
+    }
+    .leaderboard-score{
+      color:#fff;
+      font-weight:900;
+      min-width:42px;
+      text-align:right;
+      font-size:.9rem;
+    }
+    .winner-panel{display:grid; gap:10px}
     .winner-title{
       font-size:1.05rem;
       font-weight:900;
@@ -273,7 +288,6 @@
       flex-wrap:wrap;
       gap:10px;
     }
-
     @media (max-width:900px){
       .top-area{grid-template-columns:1fr}
     }
@@ -281,30 +295,9 @@
       .app{padding:8px; gap:8px}
       .section{padding:10px}
       .players-grid{grid-template-columns:1fr}
-      .controls{grid-template-columns:repeat(6,minmax(0,1fr))}
-      .river{max-height:110px}
-      .round-row{grid-template-columns:1fr auto auto}
+      .leaderboard-grid{grid-template-columns:1fr}
+      .leaderboard-item{font-size:.85rem; padding:4px 6px}
     }
-    @media (max-height:820px) and (min-width:700px){
-      .river{max-height:95px}
-      .players-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-    }
-	.river-total-hot {
-  color: #ef4444;
-  font-size: 3em;
-  font-weight: 900;
-  animation: riverShake 0.18s linear infinite;
-  transform-origin: center;
-}
-
-@keyframes riverShake {
-  0%   { transform: translateX(0px) rotate(0deg); }
-  25%  { transform: translateX(-1px) rotate(-0.4deg); }
-  50%  { transform: translateX(1px) rotate(0.4deg); }
-  75%  { transform: translateX(-1px) rotate(0deg); }
-  100% { transform: translateX(0px) rotate(0deg); }
-}
-	
   </style>
 </head>
 <body>
@@ -345,7 +338,7 @@
           <div class="winner-title" id="winnerText"></div>
           <div class="winner-actions">
             <button class="btn btn-success" id="restartSameBtn">Recommencer avec les mêmes joueurs</button>
-            <button class="btn btn-neutral" id="backHomeBtn">Revenir à l’accueil</button>
+            <button class="btn btn-neutral" id="backHomeBtn">Revenir à l'accueil</button>
           </div>
         </div>
       </div>
@@ -355,7 +348,17 @@
           <h2>Scores des joueurs</h2>
           <div class="game-status" id="gameStatus">La partie est en cours.</div>
         </div>
+
+        <div id="leaderboardSection" class="leaderboard-section">
+          <div class="leaderboard-title">🏆 Classement actuel</div>
+          <div class="leaderboard-grid" id="leaderboardList"></div>
+        </div>
+
         <div class="players-grid" id="playersGrid"></div>
+
+        <div style="text-align:center; margin-top:16px">
+          <button class="btn btn-primary" id="nextRoundBtnBottom">Manche suivante</button>
+        </div>
       </div>
     </div>
   </div>
@@ -378,6 +381,9 @@
     const backHomeBtn = document.getElementById('backHomeBtn');
     const roundPill = document.getElementById('roundPill');
     const roundNumber = document.getElementById('roundNumber');
+    const leaderboardSection = document.getElementById('leaderboardSection');
+    const leaderboardList = document.getElementById('leaderboardList');
+    const nextRoundBtnBottom = document.getElementById('nextRoundBtnBottom');
 
     const values = Array.from({length:18}, (_, i) => i - 2);
 
@@ -411,26 +417,24 @@
       });
     }
 
-	function updateRiver() {
-	river.innerHTML = '';
-	
-	riverCards.forEach((card, index) => {
-		const el = document.createElement('button');
-		el.className = 'river-card';
-		el.type = 'button';
-		el.textContent = card;
-		el.onclick = () => {
-		if (gameOver) return;
-		riverCards.splice(index, 1);
-		updateRiver();
-		};
-		river.appendChild(el);
-	});
-	
-	const total = riverCards.reduce((a, b) => a + b, 0);
-	riverTotal.textContent = total;
-	riverTotal.classList.toggle('river-total-hot', total > 21);
-	}
+    function updateRiver() {
+      river.innerHTML = '';
+      riverCards.forEach((card, index) => {
+        const el = document.createElement('button');
+        el.className = 'river-card';
+        el.type = 'button';
+        el.textContent = card;
+        el.onclick = () => {
+          if (gameOver) return;
+          riverCards.splice(index, 1);
+          updateRiver();
+        };
+        river.appendChild(el);
+      });
+      const total = riverCards.reduce((a, b) => a + b, 0);
+      riverTotal.textContent = total;
+      riverTotal.classList.toggle('river-total-hot', total > 21);
+    }
 
     function addCardToRiver(value) {
       if (gameOver) return;
@@ -456,11 +460,27 @@
       });
     }
 
+    function updateLeaderboard() {
+      const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+      leaderboardList.innerHTML = '';
+      sortedPlayers.forEach((player, index) => {
+        const item = document.createElement('div');
+        item.className = 'leaderboard-item';
+        item.innerHTML = `
+          <span class="leaderboard-rank">${index + 1}.</span>
+          <span class="leaderboard-name">${player.name}</span>
+          <span class="leaderboard-score">${player.score}</span>
+        `;
+        leaderboardList.appendChild(item);
+      });
+    }
+
     function updateScores() {
       players.forEach((p, i) => {
         const el = document.getElementById(`score-${i}`);
         if (el) el.textContent = p.score;
       });
+      updateLeaderboard();
     }
 
     function getRoundValue(index) {
@@ -482,6 +502,14 @@
       return true;
     }
 
+    function nextRound() {
+      if (gameOver) return;
+      if (checkWinnerAtEndOfRound()) return;
+      round += 1;
+      roundNumber.textContent = round;
+      gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
+    }
+
     window.addRoundPoints = function(index) {
       if (gameOver) return;
       const value = getRoundValue(index);
@@ -497,14 +525,6 @@
       players[index].score -= value;
       updateScores();
     };
-
-    function nextRound() {
-      if (gameOver) return;
-      if (checkWinnerAtEndOfRound()) return;
-      round += 1;
-      roundNumber.textContent = round;
-      gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
-    }
 
     function startFromSetup() {
       const count = parseInt(playerCount.value, 10);
@@ -561,6 +581,7 @@
     restartSameBtn.onclick = restartSamePlayers;
     backHomeBtn.onclick = backHome;
     roundPill.onclick = nextRound;
+    nextRoundBtnBottom.onclick = nextRound;
 
     renderPlayerInputs();
     renderValueButtons();
