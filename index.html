@@ -72,6 +72,7 @@
     }
     .btn-primary{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
     .btn-success{background:linear-gradient(135deg,#16a34a,#15803d)}
+    .btn-danger{background:linear-gradient(135deg,#b91c1c,#991b1b)}
     .btn-neutral{background:#475569}
     .player-count-btns{
       display:flex;
@@ -116,6 +117,23 @@
       cursor:pointer;
     }
     .pill:hover{background:rgba(51,65,85,.4)}
+    .chrono-btn{
+      min-width:90px;
+      padding:10px 16px;
+      border-radius:14px;
+      background:rgba(2,6,23,.5);
+      border:1px solid rgba(51,65,85,.95);
+      color:#e5e7eb;
+      font-size:1.05rem;
+      font-weight:900;
+      cursor:pointer;
+      touch-action:manipulation;
+      letter-spacing:.03em;
+    }
+    .chrono-btn.paused{
+      color:#facc15;
+      border-color:rgba(250,204,21,.4);
+    }
     .total-box{
       min-width:110px;
       padding:10px 14px;
@@ -194,40 +212,42 @@
     }
     .players-grid{
       display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
-      gap:10px;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
     }
     .player-card{
       background:rgba(2,6,23,.24);
       border:1px solid rgba(51,65,85,.95);
       border-radius:14px;
-      padding:10px;
+      padding:8px 10px;
     }
     .player-name{
-      font-size:1rem;
+      font-size:.95rem;
       font-weight:900;
-      margin-bottom:6px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
+      flex:1;
+      min-width:0;
+      word-break:break-word;
     }
     .player-score{
-      font-size:clamp(1.4rem,1rem + 1vw,1.9rem);
+      font-size:1.1rem;
       font-weight:900;
-      margin-bottom:8px;
       color:#fff;
+      white-space:nowrap;
+      min-width:3ch;
+      text-align:right;
     }
     .round-row{
-      display:grid;
-      grid-template-columns:1fr auto auto;
-      gap:6px;
+      display:flex;
       align-items:center;
+      gap:6px;
+      width:100%;
     }
     .round-input{
-      width:100%;
+      width:90px;
+      min-width:0;
       text-align:center;
       font-weight:700;
-      min-width:0;
+      flex-shrink:0;
     }
     .small-btn{
       min-height:36px;
@@ -357,6 +377,7 @@
         <div class="river-panel">
           <div class="topbar">
             <div class="pill" id="roundPill">Manche <span id="roundNumber">1</span></div>
+            <button class="chrono-btn" id="chronoBtn" type="button">0 min</button>
             <div class="total-box" id="riverTotal">0</div>
           </div>
           <div class="river" id="river"></div>
@@ -368,6 +389,7 @@
           <div class="winner-actions">
             <button class="btn btn-success" id="restartSameBtn">Recommencer avec les mêmes joueurs</button>
             <button class="btn btn-neutral" id="backHomeBtn">Revenir à l'accueil</button>
+            <button class="btn btn-danger" id="cancelRoundBtn">Annuler</button>
           </div>
         </div>
       </div>
@@ -408,6 +430,7 @@
     const winnerText = document.getElementById('winnerText');
     const restartSameBtn = document.getElementById('restartSameBtn');
     const backHomeBtn = document.getElementById('backHomeBtn');
+    const cancelRoundBtn = document.getElementById('cancelRoundBtn');
     const roundPill = document.getElementById('roundPill');
     const roundNumber = document.getElementById('roundNumber');
     const leaderboardSection = document.getElementById('leaderboardSection');
@@ -420,6 +443,54 @@
     let riverCards = [];
     let gameOver = false;
     let round = 1;
+    let roundPending = []; // points saisis pour la manche en cours (non encore validés dans le classement)
+    let lastRoundScores = []; // snapshot des scores avant la dernière manche (pour annulation)
+    const PLAYER_COLORS = ["#60a5fa", "#f472b6", "#facc15", "#ffffff", "#fb923c", "#a78bfa"];
+
+    // Chrono
+    let chronoSeconds = 0;
+    let chronoPaused = false;
+    let chronoInterval = null;
+    const chronoBtn = document.getElementById('chronoBtn');
+
+    function formatChrono(s) {
+      const mins = Math.round(s / 60);
+      return mins + ' min';
+    }
+
+    function updateChronoDisplay() {
+      if (chronoPaused) {
+        chronoBtn.textContent = '⏸ ' + formatChrono(chronoSeconds);
+        chronoBtn.classList.add('paused');
+      } else {
+        chronoBtn.textContent = formatChrono(chronoSeconds);
+        chronoBtn.classList.remove('paused');
+      }
+    }
+
+    function startChrono() {
+      chronoSeconds = 0;
+      chronoPaused = false;
+      clearInterval(chronoInterval);
+      updateChronoDisplay();
+      chronoInterval = setInterval(() => {
+        if (!chronoPaused) {
+          chronoSeconds++;
+          updateChronoDisplay();
+        }
+      }, 1000);
+    }
+
+    function stopChrono() {
+      clearInterval(chronoInterval);
+      chronoInterval = null;
+    }
+
+    chronoBtn.addEventListener('click', () => {
+      if (!chronoInterval && !chronoPaused) return; // not started
+      chronoPaused = !chronoPaused;
+      updateChronoDisplay();
+    });
 
     function renderPlayerInputs() {
       const count = selectedPlayerCount;
@@ -475,23 +546,36 @@
     function renderPlayers() {
       playersGrid.innerHTML = '';
       players.forEach((player, index) => {
+        const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
         const card = document.createElement('div');
         card.className = 'player-card';
         card.innerHTML = `
-          <div class="player-name" title="${player.name}">${player.name}</div>
-          <div class="player-score" id="score-${index}">${player.score}</div>
           <div class="round-row">
+            <div class="player-name" style="color:${color}" title="${player.name}">${player.name}</div>
             <input class="round-input" type="number" step="1" id="round-${index}" placeholder="Points">
             <button class="small-btn small-add" type="button" onclick="addRoundPoints(${index})">+</button>
             <button class="small-btn small-sub" type="button" onclick="subtractRoundPoints(${index})">-</button>
+            <div class="player-score" id="score-${index}">${player.score}</div>
           </div>
         `;
         playersGrid.appendChild(card);
         const input = card.querySelector(`#round-${index}`);
+        // Mise à jour du score affiché en temps réel sans toucher au classement
+        input.addEventListener('input', () => {
+          const val = parseInt(input.value, 10);
+          const el = document.getElementById(`score-${index}`);
+          if (!el) return;
+          if (Number.isNaN(val)) {
+            // Champ vide : revenir au score de base (sans pending)
+            el.textContent = players[index].score;
+          } else {
+            el.textContent = players[index].score + val;
+          }
+        });
         input.addEventListener('keydown', (e) => {
           if (e.key !== 'Enter') return;
           e.preventDefault();
-          addRoundPoints(index);
+          applyRoundPoints(index);
           const nextInput = document.getElementById(`round-${index + 1}`);
           if (nextInput) {
             nextInput.focus();
@@ -508,10 +592,11 @@
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
         const pct = Math.min(Math.max(player.score, 0), 100);
+        const playerColor = PLAYER_COLORS[players.indexOf(player) % PLAYER_COLORS.length];
         item.innerHTML = `
           <div class="leaderboard-progress" style="width:${pct}%"></div>
           <span class="leaderboard-rank">${index + 1}.</span>
-          <span class="leaderboard-name">${player.name}</span>
+          <span class="leaderboard-name" style="color:${playerColor}">${player.name}</span>
           <span class="leaderboard-score">${player.score}</span>
         `;
         leaderboardList.appendChild(item);
@@ -523,6 +608,10 @@
         const el = document.getElementById(`score-${i}`);
         if (el) el.textContent = p.score;
       });
+    }
+
+    function updateScoresAndLeaderboard() {
+      updateScores();
       updateLeaderboard();
     }
 
@@ -537,27 +626,43 @@
     function checkWinnerAtEndOfRound() {
       const eligible = players.filter(p => p.score >= 100);
       if (!eligible.length) return false;
-      const winner = players.reduce((best, cur) => cur.score > best.score ? cur : best, players[0]);
+      const topScore = Math.max(...players.map(p => p.score));
+      const winners = players.filter(p => p.score === topScore);
       gameOver = true;
+      stopChrono();
       winnerPanel.classList.remove('hidden');
-      winnerText.textContent = `Partie terminée. Gagnant : ${winner.name} avec ${winner.score} points.`;
+      if (winners.length === 1) {
+        winnerText.textContent = `Partie terminée. Gagnant : ${winners[0].name} avec ${topScore} points.`;
+      } else {
+        const names = winners.map(w => w.name).join(', ');
+        winnerText.textContent = `Partie terminée. Égalité ! Gagnants : ${names} avec ${topScore} points.`;
+      }
       gameStatus.textContent = 'La partie est terminée.';
       return true;
     }
 
     function nextRound() {
       if (gameOver) return;
-      // Appliquer automatiquement les points saisis avant de passer à la manche suivante
+      // Snapshot des scores AVANT la manche (pour pouvoir annuler)
+      // On reconstitue les scores de base en retirant les pending déjà appliqués
+      const baseScores = players.map((p, i) =>
+        p.score - (roundPending[i] !== undefined ? roundPending[i] : 0)
+      );
+      lastRoundScores = baseScores;
+      // Appliquer les scores de base propres
+      players.forEach((p, i) => { p.score = baseScores[i]; });
+      // Appliquer les valeurs finales : champ en cours prioritaire, sinon pending
       players.forEach((_, i) => {
         const input = document.getElementById(`round-${i}`);
-        if (!input) return;
-        const value = parseInt(input.value, 10);
-        if (!Number.isNaN(value)) {
-          players[i].score += value;
-          input.value = '';
+        const inputVal = input ? parseInt(input.value, 10) : NaN;
+        const val = !Number.isNaN(inputVal) ? inputVal : (roundPending[i] !== undefined ? roundPending[i] : undefined);
+        if (val !== undefined) {
+          players[i].score += val;
+          if (input) input.value = '';
         }
       });
-      updateScores();
+      roundPending = [];
+      updateScoresAndLeaderboard();
       if (checkWinnerAtEndOfRound()) return;
       round += 1;
       roundNumber.textContent = round;
@@ -567,18 +672,36 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    window.addRoundPoints = function(index) {
+    // Applique les points d'un joueur pour la manche en cours (remplace si déjà saisi)
+    window.applyRoundPoints = function(index) {
       if (gameOver) return;
-      const value = getRoundValue(index);
-      if (value === null) return;
+      const input = document.getElementById(`round-${index}`);
+      const value = parseInt(input.value, 10);
+      if (Number.isNaN(value)) return;
+      input.value = '';
+      // Annuler le pending précédent s'il existe
+      if (roundPending[index] !== undefined) {
+        players[index].score -= roundPending[index];
+      }
+      roundPending[index] = value;
       players[index].score += value;
-      updateScores();
+      updateScores(); // met à jour l'affichage du score dans la carte, pas le classement
+    };
+
+    window.addRoundPoints = function(index) {
+      applyRoundPoints(index);
     };
 
     window.subtractRoundPoints = function(index) {
       if (gameOver) return;
-      const value = getRoundValue(index);
-      if (value === null) return;
+      const input = document.getElementById(`round-${index}`);
+      const value = parseInt(input.value, 10);
+      if (Number.isNaN(value)) return;
+      input.value = '';
+      if (roundPending[index] !== undefined) {
+        players[index].score -= roundPending[index];
+      }
+      roundPending[index] = -value;
       players[index].score -= value;
       updateScores();
     };
@@ -591,6 +714,7 @@
         players.push({ name, score: 0 });
       }
       riverCards = [];
+      roundPending = [];
       gameOver = false;
       round = 1;
       roundNumber.textContent = round;
@@ -599,6 +723,7 @@
       gameView.classList.remove('hidden');
       winnerPanel.classList.add('hidden');
       gameStatus.textContent = 'La partie est en cours.';
+      startChrono();
       renderValueButtons();
       updateRiver();
       renderPlayers();
@@ -611,11 +736,12 @@
       gameOver = false;
       round = 1;
       roundNumber.textContent = round;
+      roundPending = [];
       winnerPanel.classList.add('hidden');
       gameStatus.textContent = 'La partie est relancée avec les mêmes joueurs.';
       updateRiver();
       renderPlayers();
-      updateScores();
+      updateScoresAndLeaderboard();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -625,9 +751,11 @@
       gameOver = false;
       round = 1;
       roundNumber.textContent = round;
+      roundPending = [];
       winnerPanel.classList.add('hidden');
       gameView.classList.add('hidden');
       setupSection.classList.remove('hidden');
+      updateLeaderboard();
       updateRiver();
       renderPlayerInputs();
       playerNameInputs.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -644,6 +772,19 @@
     startGameBtn.onclick = startFromSetup;
     restartSameBtn.onclick = restartSamePlayers;
     backHomeBtn.onclick = backHome;
+    cancelRoundBtn.onclick = function() {
+      if (!lastRoundScores.length) return;
+      // Restaurer les scores d'avant la dernière manche
+      players.forEach((p, i) => { p.score = lastRoundScores[i]; });
+      lastRoundScores = [];
+      roundPending = [];
+      gameOver = false;
+      startChrono();
+      winnerPanel.classList.add('hidden');
+      gameStatus.textContent = `Manche ${round} en cours.`;
+      updateScoresAndLeaderboard();
+      renderPlayers();
+    };
     roundPill.onclick = nextRound;
     nextRoundBtnBottom.onclick = nextRound;
 
