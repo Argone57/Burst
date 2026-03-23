@@ -73,6 +73,18 @@
     .btn-primary{background:linear-gradient(135deg,#2563eb,#1d4ed8)}
     .btn-success{background:linear-gradient(135deg,#16a34a,#15803d)}
     .btn-neutral{background:#475569}
+    .player-count-btns{
+      display:flex;
+      gap:8px;
+    }
+    .player-count-btn{
+      min-width:48px;
+      background:#334155;
+      font-size:1.1rem;
+    }
+    .player-count-btn.active{
+      background:linear-gradient(135deg,#2563eb,#1d4ed8);
+    }
     .player-name-inputs{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
@@ -325,14 +337,13 @@
       <h1>Burst - Compteur de points</h1>
       <div class="setup">
         <div class="setup-row">
-          <label for="playerCount">Nombre de joueurs :</label>
-          <select id="playerCount">
-            <option value="3">3</option>
-            <option value="4" selected>4</option>
-            <option value="5">5</option>
-            <option value="6">6</option>
-          </select>
-          <button class="btn btn-primary" id="createPlayersBtn">Créer les joueurs</button>
+          <label>Nombre de joueurs :</label>
+          <div class="player-count-btns">
+            <button class="btn player-count-btn" data-count="3" type="button">3</button>
+            <button class="btn player-count-btn active" data-count="4" type="button">4</button>
+            <button class="btn player-count-btn" data-count="5" type="button">5</button>
+            <button class="btn player-count-btn" data-count="6" type="button">6</button>
+          </div>
         </div>
         <div class="player-name-inputs" id="playerNameInputs"></div>
         <div class="setup-row">
@@ -383,8 +394,8 @@
   </div>
 
   <script>
-    const playerCount = document.getElementById('playerCount');
-    const createPlayersBtn = document.getElementById('createPlayersBtn');
+    let selectedPlayerCount = 4;
+    const createPlayersBtn = null; // replaced by auto-render on click
     const startGameBtn = document.getElementById('startGameBtn');
     const playerNameInputs = document.getElementById('playerNameInputs');
     const setupSection = document.getElementById('setupSection');
@@ -412,7 +423,7 @@
     let round = 1;
 
     function renderPlayerInputs() {
-      const count = parseInt(playerCount.value, 10);
+      const count = selectedPlayerCount;
       playerNameInputs.innerHTML = '';
       for (let i = 0; i < count; i++) {
         const input = document.createElement('input');
@@ -543,6 +554,7 @@
       gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
       riverCards = [];
       updateRiver();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     window.addRoundPoints = function(index) {
@@ -562,7 +574,7 @@
     };
 
     function startFromSetup() {
-      const count = parseInt(playerCount.value, 10);
+      const count = selectedPlayerCount;
       players = [];
       for (let i = 0; i < count; i++) {
         const name = document.getElementById(`playerName${i}`).value.trim() || `Joueur ${i + 1}`;
@@ -611,7 +623,14 @@
       playerNameInputs.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    createPlayersBtn.onclick = renderPlayerInputs;
+    document.querySelectorAll('.player-count-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedPlayerCount = parseInt(btn.dataset.count, 10);
+        document.querySelectorAll('.player-count-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderPlayerInputs();
+      });
+    });
     startGameBtn.onclick = startFromSetup;
     restartSameBtn.onclick = restartSamePlayers;
     backHomeBtn.onclick = backHome;
