@@ -412,6 +412,7 @@
           <div style="display:flex; align-items:center; gap:10px;">
             <label>Joueurs connus :</label>
             <button class="btn known-trash-btn" id="trashModeBtn" type="button" title="Supprimer un joueur">🗑️</button>
+            <button class="btn known-trash-btn" id="sortModeBtn" type="button" title="Trier par utilisation récente">↕️</button>
           </div>
           <div id="knownPlayersList" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
         </div>
@@ -493,7 +494,9 @@
     let round = 1;
     let roundPending = []; // points saisis pour la manche en cours (non encore validés dans le classement)
     let knownPlayers = JSON.parse(localStorage.getItem('burst_known_players') || '[]');
+    let knownPlayersUsage = JSON.parse(localStorage.getItem('burst_known_usage') || '{}');
     let trashMode = false;
+    let sortByRecent = false;
     let lastRoundScores = []; // snapshot des scores avant la dernière manche (pour annulation)
     const PLAYER_COLORS = ["#60a5fa", "#f472b6", "#facc15", "#ffffff", "#fb923c", "#a78bfa"];
 
@@ -578,6 +581,7 @@
       const block = document.getElementById('knownPlayersBlock');
       const list = document.getElementById('knownPlayersList');
       const trashBtn = document.getElementById('trashModeBtn');
+      const sortBtn = document.getElementById('sortModeBtn');
       if (!knownPlayers.length) {
         block.classList.add('hidden');
         trashMode = false;
@@ -585,9 +589,17 @@
       }
       block.classList.remove('hidden');
       if (trashBtn) trashBtn.classList.toggle('active', trashMode);
+      if (sortBtn) sortBtn.classList.toggle('active', sortByRecent);
+      // Trier la liste
+      const sorted = [...knownPlayers].sort((a, b) => {
+        if (sortByRecent) {
+          return (knownPlayersUsage[b] || 0) - (knownPlayersUsage[a] || 0);
+        }
+        return a.localeCompare(b, 'fr', { sensitivity: 'base' });
+      });
       list.innerHTML = '';
       const usedNames = getUsedNames();
-      knownPlayers.forEach(name => {
+      sorted.forEach(name => {
         const chip = document.createElement('button');
         chip.type = 'button';
         if (trashMode) {
@@ -638,6 +650,11 @@
     // Wiring trash button (after DOM ready)
     document.getElementById('trashModeBtn').addEventListener('click', () => {
       trashMode = !trashMode;
+      renderKnownPlayers();
+    });
+
+    document.getElementById('sortModeBtn').addEventListener('click', () => {
+      sortByRecent = !sortByRecent;
       renderKnownPlayers();
     });
 
@@ -701,11 +718,12 @@
           const val = parseInt(input.value, 10);
           const el = document.getElementById(`score-${index}`);
           if (!el) return;
+          // Le score de base = score actuel moins le pending déjà appliqué
+          const baseScore = players[index].score - (roundPending[index] !== undefined ? roundPending[index] : 0);
           if (Number.isNaN(val)) {
-            // Champ vide : revenir au score de base (sans pending)
             el.textContent = players[index].score;
           } else {
-            el.textContent = players[index].score + val;
+            el.textContent = baseScore + val;
           }
         });
         input.addEventListener('keydown', (e) => {
@@ -767,10 +785,13 @@
       gameOver = true;
       stopChrono();
       // Sauvegarder les noms des joueurs
+      const now = Date.now();
       players.forEach(p => {
         if (!knownPlayers.includes(p.name)) knownPlayers.push(p.name);
+        knownPlayersUsage[p.name] = now;
       });
       localStorage.setItem('burst_known_players', JSON.stringify(knownPlayers));
+      localStorage.setItem('burst_known_usage', JSON.stringify(knownPlayersUsage));
       winnerPanel.classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       nextRoundBtnBottom.classList.add('hidden');
@@ -865,12 +886,13 @@
       setupSection.classList.add('hidden');
       gameView.classList.remove('hidden');
       winnerPanel.classList.add('hidden');
+      nextRoundBtnBottom.classList.remove('hidden');
       gameStatus.textContent = 'La partie est en cours.';
       startChrono();
       renderValueButtons();
       updateRiver();
       renderPlayers();
-      updateScores();
+      updateScoresAndLeaderboard();
     }
 
     function restartSamePlayers() {
