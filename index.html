@@ -116,8 +116,12 @@
     }
     .river-total-hot {
       color: #ef4444 !important;
-      font-size: 1.25em;
+      font-size: 3em;
       animation: riverShake 0.18s linear infinite;
+    }
+    .river-total-big {
+      font-size: 2em !important;
+      transition: font-size 0.2s ease;
     }
     @keyframes riverShake {
       0%,100%{transform:translateX(0)}
@@ -247,14 +251,29 @@
       grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
     }
     .leaderboard-item{
+      position:relative;
       display:flex;
       justify-content:space-between;
       align-items:center;
       padding:5px 8px;
-      background:rgba(34,197,94,.12);
+      background:rgba(15,23,42,.6);
+      border:1px solid rgba(51,65,85,.5);
       border-radius:8px;
       font-size:.88rem;
       font-weight:700;
+      overflow:hidden;
+    }
+    .leaderboard-progress{
+      position:absolute;
+      left:0; top:0; bottom:0;
+      background:rgba(34,197,94,.25);
+      border-radius:8px;
+      transition:width .4s ease;
+      pointer-events:none;
+    }
+    .leaderboard-rank,.leaderboard-name,.leaderboard-score{
+      position:relative;
+      z-index:1;
     }
     .leaderboard-rank{
       color:var(--accent);
@@ -434,6 +453,7 @@
       const total = riverCards.reduce((a, b) => a + b, 0);
       riverTotal.textContent = total;
       riverTotal.classList.toggle('river-total-hot', total > 21);
+      riverTotal.classList.toggle('river-total-big', total > 30);
     }
 
     function addCardToRiver(value) {
@@ -466,7 +486,9 @@
       sortedPlayers.forEach((player, index) => {
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
+        const pct = Math.min(Math.max(player.score, 0), 100);
         item.innerHTML = `
+          <div class="leaderboard-progress" style="width:${pct}%"></div>
           <span class="leaderboard-rank">${index + 1}.</span>
           <span class="leaderboard-name">${player.name}</span>
           <span class="leaderboard-score">${player.score}</span>
@@ -504,10 +526,23 @@
 
     function nextRound() {
       if (gameOver) return;
+      // Appliquer automatiquement les points saisis avant de passer à la manche suivante
+      players.forEach((_, i) => {
+        const input = document.getElementById(`round-${i}`);
+        if (!input) return;
+        const value = parseInt(input.value, 10);
+        if (!Number.isNaN(value)) {
+          players[i].score += value;
+          input.value = '';
+        }
+      });
+      updateScores();
       if (checkWinnerAtEndOfRound()) return;
       round += 1;
       roundNumber.textContent = round;
       gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
+      riverCards = [];
+      updateRiver();
     }
 
     window.addRoundPoints = function(index) {
