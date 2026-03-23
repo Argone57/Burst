@@ -633,6 +633,7 @@
       gameOver = true;
       stopChrono();
       winnerPanel.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       nextRoundBtnBottom.classList.add('hidden');
       if (winners.length === 1) {
         winnerText.textContent = `Partie terminée. Gagnant : ${winners[0].name} avec ${topScore} points.`;
