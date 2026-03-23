@@ -487,6 +487,17 @@
           </div>
         `;
         playersGrid.appendChild(card);
+        const input = card.querySelector(`#round-${index}`);
+        input.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          addRoundPoints(index);
+          const nextInput = document.getElementById(`round-${index + 1}`);
+          if (nextInput) {
+            nextInput.focus();
+            nextInput.select();
+          }
+        });
       });
     }
 
