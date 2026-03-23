@@ -339,6 +339,45 @@
       flex-wrap:wrap;
       gap:10px;
     }
+    .known-trash-btn{
+      min-height:32px;
+      padding:4px 10px;
+      font-size:1rem;
+      background:transparent;
+      border:1px solid rgba(51,65,85,.7);
+      border-radius:8px;
+      cursor:pointer;
+      opacity:.6;
+      transition:opacity .15s, border-color .15s;
+    }
+    .known-trash-btn.active{
+      opacity:1;
+      border-color:#ef4444;
+      background:rgba(239,68,68,.12);
+    }
+    .known-chip.delete-mode{
+      border-color:#ef4444;
+      color:#fca5a5;
+      cursor:pointer;
+    }
+    .known-chip.delete-mode:hover{
+      background:rgba(239,68,68,.2);
+    }
+    .known-chip{
+      padding:7px 14px;
+      border-radius:999px;
+      border:1px solid rgba(51,65,85,.9);
+      background:rgba(2,6,23,.4);
+      color:#e5e7eb;
+      font-weight:700;
+      cursor:pointer;
+      font-size:.9rem;
+      transition:opacity .15s, background .15s;
+    }
+    .known-chip.used{
+      opacity:.4;
+      background:rgba(51,65,85,.3);
+    }
     @media (max-width:900px){
       .top-area{grid-template-columns:1fr}
     }
@@ -368,6 +407,13 @@
         <div class="player-name-inputs" id="playerNameInputs"></div>
         <div class="setup-row">
           <button class="btn btn-success" id="startGameBtn">Démarrer la partie</button>
+        </div>
+        <div id="knownPlayersBlock" class="hidden">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <label>Joueurs connus :</label>
+            <button class="btn known-trash-btn" id="trashModeBtn" type="button" title="Supprimer un joueur">🗑️</button>
+          </div>
+          <div id="knownPlayersList" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
         </div>
       </div>
     </div>
@@ -446,6 +492,8 @@
     let gameOver = false;
     let round = 1;
     let roundPending = []; // points saisis pour la manche en cours (non encore validés dans le classement)
+    let knownPlayers = JSON.parse(localStorage.getItem('burst_known_players') || '[]');
+    let trashMode = false;
     let lastRoundScores = []; // snapshot des scores avant la dernière manche (pour annulation)
     const PLAYER_COLORS = ["#60a5fa", "#f472b6", "#facc15", "#ffffff", "#fb923c", "#a78bfa"];
 
@@ -496,16 +544,102 @@
 
     function renderPlayerInputs() {
       const count = selectedPlayerCount;
+      // Sauvegarder les noms déjà saisis avant de reconstruire
+      const previousNames = [];
+      for (let i = 0; ; i++) {
+        const input = document.getElementById(`playerName${i}`);
+        if (!input) break;
+        previousNames.push(input.value);
+      }
       playerNameInputs.innerHTML = '';
       for (let i = 0; i < count; i++) {
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = `Joueur ${i + 1}`;
-        input.value = `Joueur ${i + 1}`;
+        // Garder le nom précédent s'il existe, sinon valeur par défaut
+        input.value = previousNames[i] !== undefined ? previousNames[i] : `Joueur ${i + 1}`;
         input.id = `playerName${i}`;
         playerNameInputs.appendChild(input);
       }
+      renderKnownPlayers();
     }
+
+    function getUsedNames() {
+      const count = selectedPlayerCount;
+      const used = [];
+      for (let i = 0; i < count; i++) {
+        const input = document.getElementById(`playerName${i}`);
+        if (input) used.push(input.value);
+      }
+      return used;
+    }
+
+    function renderKnownPlayers() {
+      const block = document.getElementById('knownPlayersBlock');
+      const list = document.getElementById('knownPlayersList');
+      const trashBtn = document.getElementById('trashModeBtn');
+      if (!knownPlayers.length) {
+        block.classList.add('hidden');
+        trashMode = false;
+        return;
+      }
+      block.classList.remove('hidden');
+      if (trashBtn) trashBtn.classList.toggle('active', trashMode);
+      list.innerHTML = '';
+      const usedNames = getUsedNames();
+      knownPlayers.forEach(name => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        if (trashMode) {
+          chip.className = 'known-chip delete-mode';
+          chip.textContent = '✕ ' + name;
+          chip.addEventListener('click', () => {
+            knownPlayers = knownPlayers.filter(n => n !== name);
+            localStorage.setItem('burst_known_players', JSON.stringify(knownPlayers));
+            // Remettre le champ par défaut si ce nom était utilisé
+            const count = selectedPlayerCount;
+            for (let i = 0; i < count; i++) {
+              const input = document.getElementById(`playerName${i}`);
+              if (input && input.value === name) input.value = `Joueur ${i + 1}`;
+            }
+            if (!knownPlayers.length) trashMode = false;
+            renderKnownPlayers();
+          });
+        } else {
+          chip.className = 'known-chip' + (usedNames.includes(name) ? ' used' : '');
+          chip.textContent = name;
+          chip.addEventListener('click', () => {
+            const count = selectedPlayerCount;
+            const usedNow = getUsedNames();
+            if (usedNow.includes(name)) {
+              for (let i = 0; i < count; i++) {
+                const input = document.getElementById(`playerName${i}`);
+                if (input && input.value === name) {
+                  input.value = `Joueur ${i + 1}`;
+                  break;
+                }
+              }
+            } else {
+              for (let i = 0; i < count; i++) {
+                const input = document.getElementById(`playerName${i}`);
+                if (input && /^Joueur \d+$/.test(input.value)) {
+                  input.value = name;
+                  break;
+                }
+              }
+            }
+            renderKnownPlayers();
+          });
+        }
+        list.appendChild(chip);
+      });
+    }
+
+    // Wiring trash button (after DOM ready)
+    document.getElementById('trashModeBtn').addEventListener('click', () => {
+      trashMode = !trashMode;
+      renderKnownPlayers();
+    });
 
     function renderValueButtons() {
       valueButtons.innerHTML = '';
@@ -632,6 +766,11 @@
       const winners = players.filter(p => p.score === topScore);
       gameOver = true;
       stopChrono();
+      // Sauvegarder les noms des joueurs
+      players.forEach(p => {
+        if (!knownPlayers.includes(p.name)) knownPlayers.push(p.name);
+      });
+      localStorage.setItem('burst_known_players', JSON.stringify(knownPlayers));
       winnerPanel.classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       nextRoundBtnBottom.classList.add('hidden');
