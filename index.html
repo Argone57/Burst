@@ -559,9 +559,18 @@
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = `Joueur ${i + 1}`;
-        // Garder le nom précédent s'il existe, sinon valeur par défaut
-        input.value = previousNames[i] !== undefined ? previousNames[i] : `Joueur ${i + 1}`;
+        // Garder le nom précédent s'il existe (sauf si c'était un placeholder par défaut)
+        const prev = previousNames[i];
+        input.value = (prev !== undefined && !/^Joueur \d+$/.test(prev)) ? prev : '';
         input.id = `playerName${i}`;
+        input.addEventListener('focus', () => input.select());
+        input.addEventListener('input', () => {
+          if (input.value.trim()) {
+            input.style.borderColor = '';
+            input.style.boxShadow = '';
+            input.placeholder = `Joueur ${i + 1}`;
+          }
+        });
         playerNameInputs.appendChild(input);
       }
       renderKnownPlayers();
@@ -572,7 +581,7 @@
       const used = [];
       for (let i = 0; i < count; i++) {
         const input = document.getElementById(`playerName${i}`);
-        if (input) used.push(input.value);
+        if (input && input.value.trim()) used.push(input.value.trim());
       }
       return used;
     }
@@ -612,7 +621,7 @@
             const count = selectedPlayerCount;
             for (let i = 0; i < count; i++) {
               const input = document.getElementById(`playerName${i}`);
-              if (input && input.value === name) input.value = `Joueur ${i + 1}`;
+              if (input && input.value === name) input.value = '';
             }
             if (!knownPlayers.length) trashMode = false;
             renderKnownPlayers();
@@ -627,14 +636,14 @@
               for (let i = 0; i < count; i++) {
                 const input = document.getElementById(`playerName${i}`);
                 if (input && input.value === name) {
-                  input.value = `Joueur ${i + 1}`;
+                  input.value = '';
                   break;
                 }
               }
             } else {
               for (let i = 0; i < count; i++) {
                 const input = document.getElementById(`playerName${i}`);
-                if (input && /^Joueur \d+$/.test(input.value)) {
+                if (input && input.value.trim() === '') {
                   input.value = name;
                   break;
                 }
@@ -873,10 +882,25 @@
     function startFromSetup() {
       const count = selectedPlayerCount;
       players = [];
+      let hasEmpty = false;
       for (let i = 0; i < count; i++) {
-        const name = document.getElementById(`playerName${i}`).value.trim() || `Joueur ${i + 1}`;
-        players.push({ name, score: 0 });
+        const input = document.getElementById(`playerName${i}`);
+        if (!input || !input.value.trim()) {
+          hasEmpty = true;
+          if (input) {
+            input.style.borderColor = '#ef4444';
+            input.style.boxShadow = '0 0 0 2px rgba(239,68,68,.3)';
+            input.placeholder = 'Nom requis !';
+          }
+        } else {
+          if (input) {
+            input.style.borderColor = '';
+            input.style.boxShadow = '';
+          }
+          players.push({ name: input.value.trim(), score: 0 });
+        }
       }
+      if (hasEmpty) return;
       riverCards = [];
       roundPending = [];
       gameOver = false;
