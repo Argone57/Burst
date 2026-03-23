@@ -412,7 +412,7 @@
           <div style="display:flex; align-items:center; gap:10px;">
             <label>Joueurs connus :</label>
             <button class="btn known-trash-btn" id="trashModeBtn" type="button" title="Supprimer un joueur">🗑️</button>
-            <button class="btn known-trash-btn" id="sortModeBtn" type="button" title="Trier par utilisation récente">↕️</button>
+            <button class="btn known-trash-btn" id="sortModeBtn" type="button" title="Trier par utilisation récente">🔤</button>
           </div>
           <div id="knownPlayersList" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
         </div>
@@ -448,7 +448,7 @@
         </div>
 
         <div id="leaderboardSection" class="leaderboard-section">
-          <div class="leaderboard-title">🏆 Classement actuel</div>
+          <div class="leaderboard-title" id="leaderboardTitle" style="cursor:pointer;" title="Changer le tri">🏆 Classement actuel</div>
           <div class="leaderboard-grid" id="leaderboardList"></div>
         </div>
 
@@ -497,6 +497,7 @@
     let knownPlayersUsage = JSON.parse(localStorage.getItem('burst_known_usage') || '{}');
     let trashMode = false;
     let sortByRecent = false;
+    let leaderboardSortAlpha = false;
     let lastRoundScores = []; // snapshot des scores avant la dernière manche (pour annulation)
     const PLAYER_COLORS = ["#60a5fa", "#f472b6", "#facc15", "#ffffff", "#fb923c", "#a78bfa"];
 
@@ -598,7 +599,11 @@
       }
       block.classList.remove('hidden');
       if (trashBtn) trashBtn.classList.toggle('active', trashMode);
-      if (sortBtn) sortBtn.classList.toggle('active', sortByRecent);
+      if (sortBtn) {
+        sortBtn.classList.toggle('active', sortByRecent);
+        sortBtn.textContent = sortByRecent ? '🕐' : '🔤';
+        sortBtn.title = sortByRecent ? 'Trier alphabétiquement' : 'Trier par utilisation récente';
+      }
       // Trier la liste
       const sorted = [...knownPlayers].sort((a, b) => {
         if (sortByRecent) {
@@ -665,6 +670,11 @@
     document.getElementById('sortModeBtn').addEventListener('click', () => {
       sortByRecent = !sortByRecent;
       renderKnownPlayers();
+    });
+
+    document.getElementById('leaderboardTitle').addEventListener('click', () => {
+      leaderboardSortAlpha = !leaderboardSortAlpha;
+      updateLeaderboard();
     });
 
     function renderValueButtons() {
@@ -749,7 +759,13 @@
     }
 
     function updateLeaderboard() {
-      const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+      const sortedPlayers = [...players].sort((a, b) =>
+        leaderboardSortAlpha
+          ? a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
+          : b.score - a.score
+      );
+      const titleEl = document.getElementById('leaderboardTitle');
+      if (titleEl) titleEl.textContent = leaderboardSortAlpha ? '🔤 Classement actuel' : '🏆 Classement actuel';
       leaderboardList.innerHTML = '';
       sortedPlayers.forEach((player, index) => {
         const item = document.createElement('div');
