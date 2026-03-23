@@ -389,7 +389,7 @@
           <div class="winner-actions">
             <button class="btn btn-success" id="restartSameBtn">Recommencer avec les mêmes joueurs</button>
             <button class="btn btn-neutral" id="backHomeBtn">Revenir à l'accueil</button>
-            <button class="btn btn-danger" id="cancelRoundBtn">Annuler</button>
+            <button class="btn btn-danger" id="cancelRoundBtn">Annuler dernière manche</button>
           </div>
         </div>
       </div>
@@ -409,6 +409,7 @@
 
         <div style="text-align:center; margin-top:16px">
           <button class="btn btn-primary" id="nextRoundBtnBottom">Manche suivante</button>
+          <button class="btn btn-danger" id="cancelRoundBtnBottom">Annuler dernière manche</button>
         </div>
       </div>
     </div>
@@ -436,6 +437,7 @@
     const leaderboardSection = document.getElementById('leaderboardSection');
     const leaderboardList = document.getElementById('leaderboardList');
     const nextRoundBtnBottom = document.getElementById('nextRoundBtnBottom');
+    const cancelRoundBtnBottom = document.getElementById('cancelRoundBtnBottom');
 
     const values = Array.from({length:18}, (_, i) => i - 2);
 
@@ -631,6 +633,7 @@
       gameOver = true;
       stopChrono();
       winnerPanel.classList.remove('hidden');
+      nextRoundBtnBottom.classList.add('hidden');
       if (winners.length === 1) {
         winnerText.textContent = `Partie terminée. Gagnant : ${winners[0].name} avec ${topScore} points.`;
       } else {
@@ -738,6 +741,7 @@
       roundNumber.textContent = round;
       roundPending = [];
       winnerPanel.classList.add('hidden');
+      nextRoundBtnBottom.classList.remove('hidden');
       gameStatus.textContent = 'La partie est relancée avec les mêmes joueurs.';
       updateRiver();
       renderPlayers();
@@ -772,19 +776,28 @@
     startGameBtn.onclick = startFromSetup;
     restartSameBtn.onclick = restartSamePlayers;
     backHomeBtn.onclick = backHome;
-    cancelRoundBtn.onclick = function() {
+    function cancelLastRound() {
       if (!lastRoundScores.length) return;
-      // Restaurer les scores d'avant la dernière manche
       players.forEach((p, i) => { p.score = lastRoundScores[i]; });
       lastRoundScores = [];
       roundPending = [];
-      gameOver = false;
-      startChrono();
-      winnerPanel.classList.add('hidden');
+      if (gameOver) {
+        gameOver = false;
+        startChrono();
+        winnerPanel.classList.add('hidden');
+      }
+      // Reculer d'une manche
+      if (round > 1) {
+        round -= 1;
+        roundNumber.textContent = round;
+      }
+      nextRoundBtnBottom.classList.remove('hidden');
       gameStatus.textContent = `Manche ${round} en cours.`;
       updateScoresAndLeaderboard();
       renderPlayers();
-    };
+    }
+    cancelRoundBtn.onclick = cancelLastRound;
+    cancelRoundBtnBottom.onclick = cancelLastRound;
     roundPill.onclick = nextRound;
     nextRoundBtnBottom.onclick = nextRound;
 
