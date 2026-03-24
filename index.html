@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Burst - Compteur de points</title>
-  <link rel="icon" type="image/png" href="favicon.png">
   <style>
     :root{
       --bg:#0b1220;
@@ -149,10 +148,6 @@
       color: #ef4444 !important;
       font-size: 3em;
       animation: riverShake 0.18s linear infinite;
-    }
-    .river-total-big {
-      font-size: 2em !important;
-      transition: font-size 0.2s ease;
     }
     @keyframes riverShake {
       0%,100%{transform:translateX(0)}
@@ -487,10 +482,32 @@
     const nextRoundBtnBottom = document.getElementById('nextRoundBtnBottom');
     const cancelRoundBtnBottom = document.getElementById('cancelRoundBtnBottom');
 
-    const values = Array.from({length:18}, (_, i) => i - 2);
+    const CARD_DEFS = [
+      { value: -3, color: '#1a4a8a', textDark: false, max: 2 },
+      { value: -2, color: '#2e6bbf', textDark: false, max: 3 },
+      { value: -1, color: '#6aaee8', textDark: false, max: 5 },
+      { value:  0, color: '#f0f0f0', textDark: true,  max: 9 },
+      { value:  1, color: '#f5e84a', textDark: true,  max: 8 },
+      { value:  2, color: '#f0d030', textDark: true,  max: 8 },
+      { value:  3, color: '#e8b820', textDark: true,  max: 7 },
+      { value:  4, color: '#e8a020', textDark: true,  max: 7 },
+      { value:  5, color: '#e88020', textDark: false, max: 6 },
+      { value:  6, color: '#e06020', textDark: false, max: 6 },
+      { value:  7, color: '#d84020', textDark: false, max: 5 },
+      { value:  8, color: '#cc2c18', textDark: false, max: 5 },
+      { value:  9, color: '#c01810', textDark: false, max: 4 },
+      { value: 10, color: '#b01010', textDark: false, max: 4 },
+      { value: 11, color: '#a00808', textDark: false, max: 3 },
+      { value: 12, color: '#8c0404', textDark: false, max: 3 },
+      { value: 13, color: '#780202', textDark: false, max: 2 },
+      { value: 14, color: '#640000', textDark: false, max: 2 },
+      { value: 15, color: '#4a0000', textDark: false, max: 1 },
+    ];
+    const values = CARD_DEFS.map(c => c.value);
 
     let players = [];
     let riverCards = [];
+    let playedCards = []; // toutes les cartes jouées dans la manche (même retirées de la rivière)
     let gameOver = false;
     let round = 1;
     let roundPending = []; // points saisis pour la manche en cours (non encore validés dans le classement)
@@ -680,12 +697,29 @@
 
     function renderValueButtons() {
       valueButtons.innerHTML = '';
-      values.forEach(v => {
+      CARD_DEFS.forEach(def => {
+        const used = playedCards.filter(c => c === def.value).length;
+        const exhausted = used >= def.max;
         const btn = document.createElement('button');
         btn.className = 'value-btn';
+        btn.dataset.value = def.value;
         btn.type = 'button';
-        btn.textContent = v;
-        btn.onclick = () => addCardToRiver(v);
+        if (exhausted) {
+          btn.style.background = def.color;
+          btn.style.color = def.textDark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)';
+          btn.style.opacity = '0.4';
+          btn.style.textDecoration = 'line-through';
+          btn.style.cursor = 'not-allowed';
+        } else {
+          btn.style.background = def.color;
+          btn.style.color = def.textDark ? '#1a1200' : '#fff';
+          btn.style.opacity = '1';
+          btn.style.textDecoration = 'none';
+          btn.style.cursor = 'pointer';
+        }
+        btn.title = `${def.value} (${used}/${def.max})`;
+        btn.textContent = def.value;
+        btn.onclick = () => { if (!exhausted) addCardToRiver(def.value); };
         valueButtons.appendChild(btn);
       });
     }
@@ -693,10 +727,16 @@
     function updateRiver() {
       river.innerHTML = '';
       riverCards.forEach((card, index) => {
+        const def = CARD_DEFS.find(d => d.value === card);
         const el = document.createElement('button');
         el.className = 'river-card';
         el.type = 'button';
         el.textContent = card;
+        if (def) {
+          el.style.background = def.color;
+          el.style.color = def.textDark ? '#1a1200' : '#fff';
+          el.style.borderColor = 'rgba(255,255,255,.15)';
+        }
         el.onclick = () => {
           if (gameOver) return;
           riverCards.splice(index, 1);
@@ -707,13 +747,15 @@
       const total = riverCards.reduce((a, b) => a + b, 0);
       riverTotal.textContent = total;
       riverTotal.classList.toggle('river-total-hot', total > 21);
-      riverTotal.classList.toggle('river-total-big', total > 30);
+      renderValueButtons();
     }
 
     function addCardToRiver(value) {
       if (gameOver) return;
       riverCards.push(value);
+      playedCards.push(value);
       updateRiver();
+      renderValueButtons();
     }
 
     function renderPlayers() {
@@ -858,6 +900,7 @@
       roundNumber.textContent = round;
       gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
       riverCards = [];
+      playedCards = [];
       updateRiver();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -919,6 +962,7 @@
       }
       if (hasEmpty) return;
       riverCards = [];
+      playedCards = [];
       roundPending = [];
       gameOver = false;
       round = 1;
@@ -939,6 +983,7 @@
     function restartSamePlayers() {
       players = players.map(p => ({ name: p.name, score: 0 }));
       riverCards = [];
+      playedCards = [];
       gameOver = false;
       round = 1;
       roundNumber.textContent = round;
@@ -959,6 +1004,7 @@
       round = 1;
       roundNumber.textContent = round;
       roundPending = [];
+      playedCards = [];
       winnerPanel.classList.add('hidden');
       gameView.classList.add('hidden');
       setupSection.classList.remove('hidden');
