@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Burst - Compteur de points</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
   <style>
     :root{
       --bg:#0b1220;
@@ -802,6 +804,11 @@
     }
 
     function updateLeaderboard() {
+      // Rangs calculés toujours par score
+      const rankedByScore = [...players].sort((a, b) => b.score - a.score);
+      const rankMap = {};
+      rankedByScore.forEach((p, i) => { rankMap[p.name] = i + 1; });
+      // Ordre d'affichage selon le tri choisi
       const sortedPlayers = [...players].sort((a, b) =>
         leaderboardSortAlpha
           ? a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
@@ -810,14 +817,14 @@
       const titleEl = document.getElementById('leaderboardTitle');
       if (titleEl) titleEl.textContent = leaderboardSortAlpha ? '🔤 Classement actuel' : '🏆 Classement actuel';
       leaderboardList.innerHTML = '';
-      sortedPlayers.forEach((player, index) => {
+      sortedPlayers.forEach((player) => {
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
         const pct = Math.min(Math.max(player.score, 0), 100);
         const playerColor = PLAYER_COLORS[players.indexOf(player) % PLAYER_COLORS.length];
         item.innerHTML = `
           <div class="leaderboard-progress" style="width:${pct}%"></div>
-          <span class="leaderboard-rank">${index + 1}.</span>
+          <span class="leaderboard-rank">${rankMap[player.name]}.</span>
           <span class="leaderboard-name" style="color:${playerColor}">${player.name}</span>
           <span class="leaderboard-score">${player.score}</span>
         `;
@@ -852,6 +859,15 @@
       const winners = players.filter(p => p.score === topScore);
       gameOver = true;
       stopChrono();
+      // Désactiver les champs de saisie
+      players.forEach((_, i) => {
+        const inp = document.getElementById(`round-${i}`);
+        const ab = document.querySelector(`button[onclick="addRoundPoints(${i})"]`);
+        const sb = document.querySelector(`button[onclick="subtractRoundPoints(${i})"]`);
+        if (inp) { inp.disabled = true; inp.style.opacity = '0.4'; }
+        if (ab) { ab.disabled = true; ab.style.opacity = '0.4'; }
+        if (sb) { sb.disabled = true; sb.style.opacity = '0.4'; }
+      });
       // Sauvegarder les noms des joueurs
       const now = Date.now();
       players.forEach(p => {
@@ -1041,6 +1057,15 @@
         roundNumber.textContent = round;
       }
       nextRoundBtnBottom.classList.remove('hidden');
+      // Réactiver les champs de saisie si on revenait d'un game over
+      players.forEach((_, i) => {
+        const inp = document.getElementById(`round-${i}`);
+        const ab = document.querySelector(`button[onclick="addRoundPoints(${i})"]`);
+        const sb = document.querySelector(`button[onclick="subtractRoundPoints(${i})"]`);
+        if (inp) { inp.disabled = false; inp.style.opacity = ''; }
+        if (ab) { ab.disabled = false; ab.style.opacity = ''; }
+        if (sb) { sb.disabled = false; sb.style.opacity = ''; }
+      });
       gameStatus.textContent = `Manche ${round} en cours.`;
       updateScoresAndLeaderboard();
       renderPlayers();
