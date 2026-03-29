@@ -700,7 +700,7 @@
     function renderValueButtons() {
       valueButtons.innerHTML = '';
       CARD_DEFS.forEach(def => {
-        const used = playedCards.filter(c => c === def.value).length;
+        const used = riverCards.filter(c => c === def.value).length;
         const exhausted = used >= def.max;
         const btn = document.createElement('button');
         btn.className = 'value-btn';
