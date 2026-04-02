@@ -386,6 +386,63 @@
       .leaderboard-grid{grid-template-columns:1fr}
       .leaderboard-item{font-size:.85rem; padding:4px 6px}
     }
+    .detail-section{
+      margin-top:12px;
+      background:rgba(15,23,42,.8);
+      border:1px solid rgba(51,65,85,.6);
+      border-radius:14px;
+    }
+    .detail-title{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 14px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:800;
+      font-size:.95rem;
+      color:#94a3b8;
+      transition:background .15s;
+      border-radius:14px;
+    }
+    .detail-title:hover{background:rgba(51,65,85,.2)}
+    .detail-chevron{font-size:.75rem; transition:transform .2s; color:#64748b}
+    .detail-chevron.open{transform:rotate(90deg)}
+    .detail-body{padding:10px 12px 12px; min-width:0}
+    .detail-table-outer{position:relative; width:100%; min-width:0}
+    .detail-table-wrap{
+      position:relative;
+      overflow-x:scroll;
+      overflow-y:visible;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(100,116,139,.6) transparent;
+      max-width:100%;
+      box-sizing:border-box;
+    }
+    .detail-table-wrap::-webkit-scrollbar{height:6px}
+    .detail-table-wrap::-webkit-scrollbar-track{background:rgba(15,23,42,.4); border-radius:3px}
+    .detail-table-wrap::-webkit-scrollbar-thumb{background:rgba(100,116,139,.6); border-radius:3px}
+    .detail-table{width:max-content; border-collapse:collapse; font-size:.82rem}
+    .detail-table th{
+      padding:5px 10px;
+      text-align:center;
+      font-weight:800;
+      color:#64748b;
+      border-bottom:1px solid rgba(51,65,85,.6);
+      white-space:nowrap;
+    }
+    .detail-table th.player-th{max-width:90px; overflow:hidden; text-overflow:ellipsis}
+    .detail-table td{
+      padding:5px 10px;
+      text-align:center;
+      border-bottom:1px solid rgba(51,65,85,.25);
+      color:#e5e7eb;
+      font-weight:700;
+    }
+    .detail-table td.round-label{color:#64748b; font-weight:800; white-space:nowrap}
+    .detail-table tr.current-round td{background:rgba(37,99,235,.12)}
+    .detail-table tr:last-child td{border-bottom:none}
   </style>
 </head>
 <body>
@@ -434,7 +491,7 @@
           <div class="winner-actions">
             <button class="btn btn-success" id="restartSameBtn">Recommencer avec les mêmes joueurs</button>
             <button class="btn btn-neutral" id="backHomeBtn">Revenir à l'accueil</button>
-            <button class="btn btn-danger" id="cancelRoundBtn">Annuler dernière manche</button>
+            <button class="btn btn-neutral" id="cancelRoundBtn">Manche précédente</button>
           </div>
         </div>
       </div>
@@ -452,9 +509,23 @@
 
         <div class="players-grid" id="playersGrid"></div>
 
-        <div style="text-align:center; margin-top:16px">
+        <div style="text-align:center; margin-top:16px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center;">
           <button class="btn btn-primary" id="nextRoundBtnBottom">Manche suivante</button>
-          <button class="btn btn-danger" id="cancelRoundBtnBottom">Annuler dernière manche</button>
+          <button class="btn btn-neutral" id="cancelRoundBtnBottom">Manche précédente</button>
+        </div>
+
+        <div class="detail-section" id="detailSection">
+          <div class="detail-title" id="detailToggle">
+            <span>📋 Détail des manches</span>
+            <span class="detail-chevron" id="detailChevron">▶</span>
+          </div>
+          <div class="detail-body hidden" id="detailBody">
+            <div class="detail-table-outer">
+              <div class="detail-table-wrap">
+                <table class="detail-table" id="detailTable"></table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -509,17 +580,44 @@
 
     let players = [];
     let riverCards = [];
-    let playedCards = []; // toutes les cartes jouées dans la manche (même retirées de la rivière)
     let gameOver = false;
     let round = 1;
-    let roundPending = []; // points saisis pour la manche en cours (non encore validés dans le classement)
+    // roundPending[i] = score saisi pour la manche en cours (null = pas saisi)
+    let roundPending = [];
+    // roundHistory[m][i] = score cumulé du joueur i après la manche m (0-indexed)
+    let roundHistory = [];
+    // roundInputHistory[m][i] = valeur saisie pour le joueur i à la manche m
+    let roundInputHistory = [];
     let knownPlayers = JSON.parse(localStorage.getItem('burst_known_players') || '[]');
     let knownPlayersUsage = JSON.parse(localStorage.getItem('burst_known_usage') || '{}');
     let trashMode = false;
     let sortByRecent = false;
     let leaderboardSortAlpha = false;
-    let lastRoundScores = []; // snapshot des scores avant la dernière manche (pour annulation)
     const PLAYER_COLORS = ["#60a5fa", "#f472b6", "#facc15", "#ffffff", "#fb923c", "#a78bfa"];
+
+    // Score de base du joueur i = cumulé jusqu'à la manche précédente
+    function baseScore(i) {
+      if (round <= 1) return 0;
+      return roundHistory[round - 2] ? (roundHistory[round - 2][i] ?? 0) : 0;
+    }
+
+    // Score total actuel du joueur i (base + pending si saisi)
+    function currentScore(i) {
+      const p = roundPending[i];
+      return baseScore(i) + (p !== null && p !== undefined ? p : 0);
+    }
+
+    function recalcHistoryFrom(fromIdx) {
+      for (let m = fromIdx; m < roundInputHistory.length; m++) {
+        const inputs = roundInputHistory[m];
+        if (!inputs) break;
+        const prev = m > 0 ? (roundHistory[m - 1] || players.map(() => 0)) : players.map(() => 0);
+        roundHistory[m] = players.map((_, i) => {
+          const v = inputs[i];
+          return prev[i] + (v !== null && v !== undefined ? v : 0);
+        });
+      }
+    }
 
     // Chrono
     let chronoSeconds = 0;
@@ -568,7 +666,6 @@
 
     function renderPlayerInputs() {
       const count = selectedPlayerCount;
-      // Sauvegarder les noms déjà saisis avant de reconstruire
       const previousNames = [];
       for (let i = 0; ; i++) {
         const input = document.getElementById(`playerName${i}`);
@@ -580,7 +677,6 @@
         const input = document.createElement('input');
         input.type = 'text';
         input.placeholder = `Joueur ${i + 1}`;
-        // Garder le nom précédent s'il existe (sauf si c'était un placeholder par défaut)
         const prev = previousNames[i];
         input.value = (prev !== undefined && !/^Joueur \d+$/.test(prev)) ? prev : '';
         input.id = `playerName${i}`;
@@ -591,6 +687,13 @@
             input.style.boxShadow = '';
             input.placeholder = `Joueur ${i + 1}`;
           }
+        });
+        input.addEventListener('keydown', (e) => {
+          if (e.key !== 'Enter') return;
+          e.preventDefault();
+          const next = document.getElementById(`playerName${i + 1}`);
+          if (next) { next.focus(); next.select(); }
+          else document.getElementById('startGameBtn')?.focus();
         });
         playerNameInputs.appendChild(input);
       }
@@ -766,109 +869,97 @@
         const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
         const card = document.createElement('div');
         card.className = 'player-card';
+        const pendingVal = roundPending[index];
+        const inputVal = (pendingVal !== null && pendingVal !== undefined) ? pendingVal : '';
         card.innerHTML = `
           <div class="round-row">
             <div class="player-name" style="color:${color}" title="${player.name}">${player.name}</div>
-            <input class="round-input" type="number" step="1" id="round-${index}" placeholder="Points">
+            <input class="round-input" type="number" step="1" id="round-${index}" placeholder="Points" value="${inputVal}">
             <button class="small-btn small-add" type="button" onclick="addRoundPoints(${index})">+</button>
             <button class="small-btn small-sub" type="button" onclick="subtractRoundPoints(${index})">-</button>
-            <div class="player-score" id="score-${index}">${player.score}</div>
+            <div class="player-score" id="score-${index}">${currentScore(index)}</div>
           </div>
         `;
         playersGrid.appendChild(card);
         const input = card.querySelector(`#round-${index}`);
-        // Mise à jour du score affiché en temps réel sans toucher au classement
+        input.addEventListener('focus', () => input.select());
         input.addEventListener('input', () => {
           const val = parseInt(input.value, 10);
           const el = document.getElementById(`score-${index}`);
           if (!el) return;
-          // Le score de base = score actuel moins le pending déjà appliqué
-          const baseScore = players[index].score - (roundPending[index] !== undefined ? roundPending[index] : 0);
-          if (Number.isNaN(val)) {
-            el.textContent = players[index].score;
-          } else {
-            el.textContent = baseScore + val;
-          }
+          el.textContent = Number.isNaN(val) ? baseScore(index) : baseScore(index) + val;
         });
         input.addEventListener('keydown', (e) => {
           if (e.key !== 'Enter') return;
           e.preventDefault();
-          applyRoundPoints(index);
-          const nextInput = document.getElementById(`round-${index + 1}`);
-          if (nextInput) {
-            nextInput.focus();
-            nextInput.select();
-          }
+          applyRoundPoints(index, true);
+          const next = document.getElementById(`round-${index + 1}`);
+          if (next && !next.disabled) { next.focus(); next.select(); }
         });
+      });
+      if (gameOver) setInputsDisabled(true);
+    }
+
+    function updateScores() {
+      players.forEach((_, i) => {
+        const el = document.getElementById(`score-${i}`);
+        if (el) el.textContent = currentScore(i);
+      });
+    }
+
+    function setInputsDisabled(disabled) {
+      players.forEach((_, i) => {
+        const inp = document.getElementById(`round-${i}`);
+        const ab = document.querySelector(`button[onclick="addRoundPoints(${i})"]`);
+        const sb = document.querySelector(`button[onclick="subtractRoundPoints(${i})"]`);
+        if (inp) { inp.disabled = disabled; inp.style.opacity = disabled ? '0.4' : ''; }
+        if (ab) { ab.disabled = disabled; ab.style.opacity = disabled ? '0.4' : ''; }
+        if (sb) { sb.disabled = disabled; sb.style.opacity = disabled ? '0.4' : ''; }
       });
     }
 
     function updateLeaderboard() {
-      // Rangs calculés toujours par score
-      const rankedByScore = [...players].sort((a, b) => b.score - a.score);
-      const rankMap = {};
-      rankedByScore.forEach((p, i) => { rankMap[p.name] = i + 1; });
-      // Ordre d'affichage selon le tri choisi
-      const sortedPlayers = [...players].sort((a, b) =>
-        leaderboardSortAlpha
-          ? a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
-          : b.score - a.score
-      );
+      const byScore = [...players].sort((a, b) => currentScore(players.indexOf(b)) - currentScore(players.indexOf(a)));
+      const rankMap = new Map();
+      byScore.forEach((p, i) => rankMap.set(p, i + 1));
+      const displayed = leaderboardSortAlpha
+        ? [...players].sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }))
+        : byScore;
       const titleEl = document.getElementById('leaderboardTitle');
       if (titleEl) titleEl.textContent = leaderboardSortAlpha ? '🔤 Classement actuel' : '🏆 Classement actuel';
       leaderboardList.innerHTML = '';
-      sortedPlayers.forEach((player) => {
+      displayed.forEach((player) => {
         const item = document.createElement('div');
         item.className = 'leaderboard-item';
-        const pct = Math.min(Math.max(player.score, 0), 100);
+        const score = currentScore(players.indexOf(player));
+        const pct = Math.min(Math.max(score, 0), 100);
         const playerColor = PLAYER_COLORS[players.indexOf(player) % PLAYER_COLORS.length];
         item.innerHTML = `
           <div class="leaderboard-progress" style="width:${pct}%"></div>
-          <span class="leaderboard-rank">${rankMap[player.name]}.</span>
+          <span class="leaderboard-rank">${rankMap.get(player)}.</span>
           <span class="leaderboard-name" style="color:${playerColor}">${player.name}</span>
-          <span class="leaderboard-score">${player.score}</span>
+          <span class="leaderboard-score">${score}</span>
         `;
         leaderboardList.appendChild(item);
-      });
-    }
-
-    function updateScores() {
-      players.forEach((p, i) => {
-        const el = document.getElementById(`score-${i}`);
-        if (el) el.textContent = p.score;
       });
     }
 
     function updateScoresAndLeaderboard() {
       updateScores();
       updateLeaderboard();
-    }
-
-    function getRoundValue(index) {
-      const input = document.getElementById(`round-${index}`);
-      const value = parseInt(input.value, 10);
-      if (Number.isNaN(value)) return null;
-      input.value = '';
-      return value;
+      const body = document.getElementById('detailBody');
+      if (body && !body.classList.contains('hidden')) updateDetailTable();
     }
 
     function checkWinnerAtEndOfRound() {
-      const eligible = players.filter(p => p.score >= 100);
+      const eligible = players.filter((_, i) => currentScore(i) >= 100);
       if (!eligible.length) return false;
-      const topScore = Math.max(...players.map(p => p.score));
-      const winners = players.filter(p => p.score === topScore);
+      const scores = players.map((_, i) => currentScore(i));
+      const topScore = Math.max(...scores);
+      const winners = players.filter((_, i) => scores[i] === topScore);
       gameOver = true;
       stopChrono();
-      // Désactiver les champs de saisie
-      players.forEach((_, i) => {
-        const inp = document.getElementById(`round-${i}`);
-        const ab = document.querySelector(`button[onclick="addRoundPoints(${i})"]`);
-        const sb = document.querySelector(`button[onclick="subtractRoundPoints(${i})"]`);
-        if (inp) { inp.disabled = true; inp.style.opacity = '0.4'; }
-        if (ab) { ab.disabled = true; ab.style.opacity = '0.4'; }
-        if (sb) { sb.disabled = true; sb.style.opacity = '0.4'; }
-      });
-      // Sauvegarder les noms des joueurs
+      setInputsDisabled(true);
       const now = Date.now();
       players.forEach(p => {
         if (!knownPlayers.includes(p.name)) knownPlayers.push(p.name);
@@ -889,71 +980,89 @@
       return true;
     }
 
-    function nextRound() {
-      if (gameOver) return;
-      // Snapshot des scores AVANT la manche (pour pouvoir annuler)
-      // On reconstitue les scores de base en retirant les pending déjà appliqués
-      const baseScores = players.map((p, i) =>
-        p.score - (roundPending[i] !== undefined ? roundPending[i] : 0)
-      );
-      lastRoundScores = baseScores;
-      // Appliquer les scores de base propres
-      players.forEach((p, i) => { p.score = baseScores[i]; });
-      // Appliquer les valeurs finales : champ en cours prioritaire, sinon pending
-      players.forEach((_, i) => {
-        const input = document.getElementById(`round-${i}`);
-        const inputVal = input ? parseInt(input.value, 10) : NaN;
-        const val = !Number.isNaN(inputVal) ? inputVal : (roundPending[i] !== undefined ? roundPending[i] : undefined);
-        if (val !== undefined) {
-          players[i].score += val;
-          if (input) input.value = '';
-        }
-      });
-      roundPending = [];
-      updateScoresAndLeaderboard();
-      if (checkWinnerAtEndOfRound()) return;
-      round += 1;
-      roundNumber.textContent = round;
-      gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
-      riverCards = [];
-      playedCards = [];
-      updateRiver();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // Applique les points d'un joueur pour la manche en cours (remplace si déjà saisi)
-    window.applyRoundPoints = function(index) {
+    window.applyRoundPoints = function(index, skipFocus) {
       if (gameOver) return;
       const input = document.getElementById(`round-${index}`);
       const value = parseInt(input.value, 10);
       if (Number.isNaN(value)) return;
-      input.value = '';
-      // Annuler le pending précédent s'il existe
-      if (roundPending[index] !== undefined) {
-        players[index].score -= roundPending[index];
-      }
       roundPending[index] = value;
-      players[index].score += value;
-      updateScores(); // met à jour l'affichage du score dans la carte, pas le classement
+      updateScores();
+      if (!skipFocus) {
+        const next = document.getElementById(`round-${index + 1}`);
+        if (next && !next.disabled) { next.focus(); next.select(); }
+      }
     };
 
-    window.addRoundPoints = function(index) {
-      applyRoundPoints(index);
-    };
+    window.addRoundPoints = function(index) { applyRoundPoints(index, false); };
 
     window.subtractRoundPoints = function(index) {
       if (gameOver) return;
       const input = document.getElementById(`round-${index}`);
       const value = parseInt(input.value, 10);
       if (Number.isNaN(value)) return;
-      input.value = '';
-      if (roundPending[index] !== undefined) {
-        players[index].score -= roundPending[index];
-      }
       roundPending[index] = -value;
-      players[index].score -= value;
+      input.value = -value;
       updateScores();
+      const next = document.getElementById(`round-${index + 1}`);
+      if (next && !next.disabled) { next.focus(); next.select(); }
     };
+
+    function nextRound() {
+      if (gameOver) return;
+      // Appliquer les valeurs encore dans les champs (priorité au champ courant)
+      players.forEach((_, i) => {
+        const input = document.getElementById(`round-${i}`);
+        const val = parseInt(input?.value, 10);
+        if (!Number.isNaN(val)) roundPending[i] = val;
+      });
+      // Sauvegarder les inputs de cette manche
+      roundInputHistory[round - 1] = [...roundPending];
+      // Recalculer l'historique cumulé
+      recalcHistoryFrom(round - 1);
+      updateScoresAndLeaderboard();
+      if (checkWinnerAtEndOfRound()) return;
+      // Restaurer les inputs de la manche suivante si elle existe
+      roundPending = roundInputHistory[round]
+        ? [...roundInputHistory[round]]
+        : players.map(() => null);
+      round += 1;
+      roundNumber.textContent = round;
+      gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
+      riverCards = [];
+      updateRiver();
+      renderPlayers();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function prevRound() {
+      if (round <= 1 && !gameOver) return;
+      if (gameOver) {
+        gameOver = false;
+        startChrono();
+        winnerPanel.classList.add('hidden');
+        nextRoundBtnBottom.classList.remove('hidden');
+        roundPending = roundInputHistory[round - 1]
+          ? [...roundInputHistory[round - 1]]
+          : players.map(() => null);
+        setInputsDisabled(false);
+        gameStatus.textContent = `Manche ${round} en cours.`;
+        renderPlayers();
+        updateScoresAndLeaderboard();
+        return;
+      }
+      if (round <= 1) return;
+      // Sauvegarder le pending courant avant de reculer
+      roundInputHistory[round - 1] = [...roundPending];
+      round -= 1;
+      roundNumber.textContent = round;
+      roundPending = roundInputHistory[round - 1]
+        ? [...roundInputHistory[round - 1]]
+        : players.map(() => null);
+      nextRoundBtnBottom.classList.remove('hidden');
+      gameStatus.textContent = `Manche ${round} en cours.`;
+      renderPlayers();
+      updateScoresAndLeaderboard();
+    }
 
     function startFromSetup() {
       const count = selectedPlayerCount;
@@ -969,21 +1078,18 @@
             input.placeholder = 'Nom requis !';
           }
         } else {
-          if (input) {
-            input.style.borderColor = '';
-            input.style.boxShadow = '';
-          }
-          players.push({ name: input.value.trim(), score: 0 });
+          if (input) { input.style.borderColor = ''; input.style.boxShadow = ''; }
+          players.push({ name: input.value.trim() });
         }
       }
       if (hasEmpty) return;
       riverCards = [];
-      playedCards = [];
-      roundPending = [];
+      roundPending = players.map(() => null);
+      roundHistory = [];
+      roundInputHistory = [];
       gameOver = false;
       round = 1;
       roundNumber.textContent = round;
-
       setupSection.classList.add('hidden');
       gameView.classList.remove('hidden');
       winnerPanel.classList.add('hidden');
@@ -997,16 +1103,18 @@
     }
 
     function restartSamePlayers() {
-      players = players.map(p => ({ name: p.name, score: 0 }));
+      players = players.map(p => ({ name: p.name }));
       riverCards = [];
-      playedCards = [];
+      roundPending = players.map(() => null);
+      roundHistory = [];
+      roundInputHistory = [];
       gameOver = false;
       round = 1;
       roundNumber.textContent = round;
-      roundPending = [];
       winnerPanel.classList.add('hidden');
       nextRoundBtnBottom.classList.remove('hidden');
       gameStatus.textContent = 'La partie est relancée avec les mêmes joueurs.';
+      startChrono();
       updateRiver();
       renderPlayers();
       updateScoresAndLeaderboard();
@@ -1016,14 +1124,16 @@
     function backHome() {
       players = [];
       riverCards = [];
+      roundPending = [];
+      roundHistory = [];
+      roundInputHistory = [];
       gameOver = false;
       round = 1;
       roundNumber.textContent = round;
-      roundPending = [];
-      playedCards = [];
       winnerPanel.classList.add('hidden');
       gameView.classList.add('hidden');
       setupSection.classList.remove('hidden');
+      stopChrono();
       updateLeaderboard();
       updateRiver();
       renderPlayerInputs();
@@ -1041,39 +1151,71 @@
     startGameBtn.onclick = startFromSetup;
     restartSameBtn.onclick = restartSamePlayers;
     backHomeBtn.onclick = backHome;
-    function cancelLastRound() {
-      if (!lastRoundScores.length) return;
-      players.forEach((p, i) => { p.score = lastRoundScores[i]; });
-      lastRoundScores = [];
-      roundPending = [];
-      if (gameOver) {
-        gameOver = false;
-        startChrono();
-        winnerPanel.classList.add('hidden');
-      }
-      // Reculer d'une manche
-      if (round > 1) {
-        round -= 1;
-        roundNumber.textContent = round;
-      }
-      nextRoundBtnBottom.classList.remove('hidden');
-      // Réactiver les champs de saisie si on revenait d'un game over
-      players.forEach((_, i) => {
-        const inp = document.getElementById(`round-${i}`);
-        const ab = document.querySelector(`button[onclick="addRoundPoints(${i})"]`);
-        const sb = document.querySelector(`button[onclick="subtractRoundPoints(${i})"]`);
-        if (inp) { inp.disabled = false; inp.style.opacity = ''; }
-        if (ab) { ab.disabled = false; ab.style.opacity = ''; }
-        if (sb) { sb.disabled = false; sb.style.opacity = ''; }
-      });
-      gameStatus.textContent = `Manche ${round} en cours.`;
-      updateScoresAndLeaderboard();
-      renderPlayers();
-    }
-    cancelRoundBtn.onclick = cancelLastRound;
-    cancelRoundBtnBottom.onclick = cancelLastRound;
+    cancelRoundBtn.onclick = prevRound;
+    cancelRoundBtnBottom.onclick = prevRound;
     roundPill.onclick = nextRound;
     nextRoundBtnBottom.onclick = nextRound;
+
+    document.getElementById('detailToggle').addEventListener('click', () => {
+      const body = document.getElementById('detailBody');
+      const chevron = document.getElementById('detailChevron');
+      const isHidden = body.classList.contains('hidden');
+      body.classList.toggle('hidden', !isHidden);
+      chevron.classList.toggle('open', isHidden);
+      if (isHidden) updateDetailTable();
+    });
+
+    function updateDetailTable() {
+      const table = document.getElementById('detailTable');
+      if (!table) return;
+      table.innerHTML = '';
+      const totalRounds = roundInputHistory.length;
+      if (!totalRounds) return;
+
+      function deltaCell(v, cumul) {
+        const td = document.createElement('td');
+        const deltaStr = (v !== null && v !== undefined) ? (v >= 0 ? '+' + v : String(v)) : '—';
+        const cumulStr = (cumul !== null && cumul !== undefined) ? ` (${cumul})` : '';
+        td.innerHTML = `<span style="color:${v > 0 ? '#4ade80' : v < 0 ? '#f87171' : '#94a3b8'}">${deltaStr}</span><span style="color:#64748b;font-size:.78rem">${cumulStr}</span>`;
+        return td;
+      }
+
+      // Joueurs en colonnes, manches en lignes
+      const thead = document.createElement('thead');
+      const headerRow = document.createElement('tr');
+      const thRound = document.createElement('th');
+      thRound.textContent = 'Manche';
+      headerRow.appendChild(thRound);
+      players.forEach((p, i) => {
+        const th = document.createElement('th');
+        th.className = 'player-th';
+        th.style.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+        th.textContent = p.name;
+        th.title = p.name;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+      table.appendChild(thead);
+
+      const tbody = document.createElement('tbody');
+      for (let m = 0; m < totalRounds; m++) {
+        const inputs = roundInputHistory[m];
+        if (!inputs) continue;
+        const scores = roundHistory[m];
+        const isCurrent = (m === round - 1);
+        const row = document.createElement('tr');
+        if (isCurrent) row.className = 'current-round';
+        const tdLabel = document.createElement('td');
+        tdLabel.className = 'round-label';
+        tdLabel.textContent = m + 1;
+        row.appendChild(tdLabel);
+        players.forEach((_, i) => {
+          row.appendChild(deltaCell(inputs[i], scores ? scores[i] : null));
+        });
+        tbody.appendChild(row);
+      }
+      table.appendChild(tbody);
+    }
 
     renderPlayerInputs();
     renderValueButtons();
