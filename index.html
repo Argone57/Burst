@@ -76,6 +76,7 @@
     .btn-success{background:linear-gradient(135deg,#16a34a,#15803d)}
     .btn-danger{background:linear-gradient(135deg,#b91c1c,#991b1b)}
     .btn-neutral{background:#475569}
+    .btn-home{background:#78350f; color:#fde68a !important}
     .player-count-btns{
       display:flex;
       gap:8px;
@@ -490,7 +491,7 @@
           <div class="winner-title" id="winnerText"></div>
           <div class="winner-actions">
             <button class="btn btn-success" id="restartSameBtn">Recommencer avec les mêmes joueurs</button>
-            <button class="btn btn-neutral" id="backHomeBtn">Revenir à l'accueil</button>
+            <button class="btn btn-home" id="backHomeBtn">Revenir à l'accueil</button>
             <button class="btn btn-neutral" id="cancelRoundBtn">Manche précédente</button>
           </div>
         </div>
@@ -1028,9 +1029,14 @@
       round += 1;
       roundNumber.textContent = round;
       gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
+      // Créer la ligne de la nouvelle manche si elle n'existe pas déjà
+      if (!roundInputHistory[round - 1]) {
+        roundInputHistory[round - 1] = players.map(() => null);
+      }
       riverCards = [];
       updateRiver();
       renderPlayers();
+      updateScoresAndLeaderboard();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1099,6 +1105,8 @@
       renderValueButtons();
       updateRiver();
       renderPlayers();
+      // Créer la ligne de la 1ère manche
+      roundInputHistory[0] = players.map(() => null);
       updateScoresAndLeaderboard();
     }
 
@@ -1117,6 +1125,8 @@
       startChrono();
       updateRiver();
       renderPlayers();
+      // Créer la ligne de la 1ère manche
+      roundInputHistory[0] = players.map(() => null);
       updateScoresAndLeaderboard();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1171,6 +1181,10 @@
       table.innerHTML = '';
       const totalRounds = roundInputHistory.length;
       if (!totalRounds) return;
+      // S'assurer que la manche courante a toujours une entrée
+      if (!roundInputHistory[round - 1]) {
+        roundInputHistory[round - 1] = players.map(() => null);
+      }
 
       function deltaCell(v, cumul) {
         const td = document.createElement('td');
