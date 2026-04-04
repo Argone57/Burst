@@ -27,7 +27,6 @@
       background:linear-gradient(180deg,#07101c 0%, #0f172a 45%, #111827 100%);
       color:var(--text);
       font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      overflow-x:hidden;
     }
     body{min-height:100dvh}
     .app{
@@ -279,7 +278,7 @@
     .leaderboard-grid{
       display:grid;
       gap:3px;
-      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
     }
     .leaderboard-item{
       position:relative;
@@ -290,9 +289,10 @@
       background:rgba(15,23,42,.6);
       border:1px solid rgba(51,65,85,.5);
       border-radius:8px;
-      font-size:.88rem;
+      font-size:.82rem;
       font-weight:700;
       overflow:hidden;
+      gap:2px;
     }
     .leaderboard-progress{
       position:absolute;
@@ -308,10 +308,11 @@
     }
     .leaderboard-rank{
       color:var(--accent);
-      width:20px;
+      width:16px;
       text-align:center;
       font-weight:900;
-      font-size:.9rem;
+      font-size:.85rem;
+      flex-shrink:0;
     }
     .leaderboard-name{
       flex:1;
@@ -319,13 +320,15 @@
       text-overflow:ellipsis;
       white-space:nowrap;
       padding-left:4px;
+      min-width:0;
     }
     .leaderboard-score{
       color:#fff;
       font-weight:900;
-      min-width:42px;
+      min-width:28px;
       text-align:right;
-      font-size:.9rem;
+      font-size:.85rem;
+      flex-shrink:0;
     }
     .winner-panel{display:grid; gap:10px}
     .winner-title{
@@ -384,65 +387,82 @@
       .app{padding:8px; gap:8px}
       .section{padding:10px}
       .players-grid{grid-template-columns:1fr}
-      .leaderboard-grid{grid-template-columns:1fr}
       .leaderboard-item{font-size:.85rem; padding:4px 6px}
     }
     .detail-section{
       margin-top:12px;
-      background:rgba(15,23,42,.8);
-      border:1px solid rgba(51,65,85,.6);
-      border-radius:14px;
+      background:rgba(15,23,42,.72);
+      border:1px solid rgba(51,65,85,.9);
+      border-radius:var(--radius);
+      padding:0;
     }
     .detail-title{
       display:flex;
       justify-content:space-between;
       align-items:center;
-      padding:10px 14px;
+      padding:12px 16px;
       cursor:pointer;
       user-select:none;
-      font-weight:800;
+      font-weight:900;
       font-size:.95rem;
       color:#94a3b8;
-      transition:background .15s;
-      border-radius:14px;
     }
     .detail-title:hover{background:rgba(51,65,85,.2)}
-    .detail-chevron{font-size:.75rem; transition:transform .2s; color:#64748b}
+    .detail-chevron{color:#94a3b8; transition:transform .25s; font-size:1rem}
     .detail-chevron.open{transform:rotate(90deg)}
-    .detail-body{padding:10px 12px 12px; min-width:0}
-    .detail-table-outer{position:relative; width:100%; min-width:0}
-    .detail-table-wrap{
-      position:relative;
-      overflow-x:scroll;
-      overflow-y:visible;
+    .detail-body{display:none; padding:0 12px 12px}
+    .detail-body.open{display:block}
+    .detail-scroll-wrap{
+      overflow-x:auto;
       -webkit-overflow-scrolling:touch;
       scrollbar-width:thin;
       scrollbar-color:rgba(100,116,139,.6) transparent;
-      max-width:100%;
-      box-sizing:border-box;
     }
-    .detail-table-wrap::-webkit-scrollbar{height:6px}
-    .detail-table-wrap::-webkit-scrollbar-track{background:rgba(15,23,42,.4); border-radius:3px}
-    .detail-table-wrap::-webkit-scrollbar-thumb{background:rgba(100,116,139,.6); border-radius:3px}
-    .detail-table{width:max-content; border-collapse:collapse; font-size:.82rem}
+    .detail-scroll-wrap::-webkit-scrollbar{height:6px}
+    .detail-scroll-wrap::-webkit-scrollbar-track{background:rgba(15,23,42,.4); border-radius:3px}
+    .detail-scroll-wrap::-webkit-scrollbar-thumb{background:rgba(100,116,139,.6); border-radius:3px}
+    .detail-table{
+      width:max-content;
+      min-width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:.82rem;
+    }
     .detail-table th{
-      padding:5px 10px;
+      padding:6px 8px;
       text-align:center;
-      font-weight:800;
       color:#64748b;
-      border-bottom:1px solid rgba(51,65,85,.6);
+      font-weight:700;
+      border-bottom:1px solid rgba(51,65,85,.7);
+      position:sticky;
+      top:0;
+      background:rgba(15,23,42,.95);
       white-space:nowrap;
     }
     .detail-table th.player-th{max-width:90px; overflow:hidden; text-overflow:ellipsis}
     .detail-table td{
-      padding:5px 10px;
+      padding:5px 8px;
       text-align:center;
-      border-bottom:1px solid rgba(51,65,85,.25);
-      color:#e5e7eb;
+      border-bottom:1px solid rgba(51,65,85,.3);
       font-weight:700;
     }
-    .detail-table td.round-label{color:#64748b; font-weight:800; white-space:nowrap}
-    .detail-table tr.current-round td{background:rgba(37,99,235,.12)}
+    .detail-table td.round-label{color:#64748b; font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; font-family:ui-monospace,monospace}
+    .detail-sticky-col{
+      position:sticky;
+      left:0;
+      z-index:2;
+      background:rgba(15,23,42,.97);
+      font-weight:800;
+      white-space:nowrap;
+      text-align:left !important;
+      padding-right:12px !important;
+      max-width:110px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    thead .detail-sticky-col{z-index:3; background:rgba(15,23,42,.97)}
+    .detail-table tr.current-round td{background:rgba(34,197,94,.08); border-bottom:1px solid rgba(34,197,94,.2)}
+    .detail-table tr.current-round td.round-label{color:#22c55e}
     .detail-table tr:last-child td{border-bottom:none}
   </style>
 </head>
@@ -498,7 +518,7 @@
       </div>
 
       <div class="scores-panel">
-        <div class="scores-header">
+        <div class="scores-header hidden">
           <h2>Scores des joueurs</h2>
           <div class="game-status" id="gameStatus">La partie est en cours.</div>
         </div>
@@ -520,11 +540,9 @@
             <span>📋 Détail des manches</span>
             <span class="detail-chevron" id="detailChevron">▶</span>
           </div>
-          <div class="detail-body hidden" id="detailBody">
-            <div class="detail-table-outer">
-              <div class="detail-table-wrap">
-                <table class="detail-table" id="detailTable"></table>
-              </div>
+          <div class="detail-body" id="detailBody">
+            <div class="detail-scroll-wrap">
+              <table class="detail-table" id="detailTable"></table>
             </div>
           </div>
         </div>
@@ -859,7 +877,6 @@
     function addCardToRiver(value) {
       if (gameOver) return;
       riverCards.push(value);
-      playedCards.push(value);
       updateRiver();
       renderValueButtons();
     }
@@ -949,7 +966,7 @@
       updateScores();
       updateLeaderboard();
       const body = document.getElementById('detailBody');
-      if (body && !body.classList.contains('hidden')) updateDetailTable();
+      if (body && body.classList.contains('open')) updateDetailTable();
     }
 
     function checkWinnerAtEndOfRound() {
@@ -1166,22 +1183,11 @@
     roundPill.onclick = nextRound;
     nextRoundBtnBottom.onclick = nextRound;
 
-    document.getElementById('detailToggle').addEventListener('click', () => {
-      const body = document.getElementById('detailBody');
-      const chevron = document.getElementById('detailChevron');
-      const isHidden = body.classList.contains('hidden');
-      body.classList.toggle('hidden', !isHidden);
-      chevron.classList.toggle('open', isHidden);
-      if (isHidden) updateDetailTable();
-    });
-
     function updateDetailTable() {
       const table = document.getElementById('detailTable');
       if (!table) return;
       table.innerHTML = '';
       const totalRounds = roundInputHistory.length;
-      if (!totalRounds) return;
-      // S'assurer que la manche courante a toujours une entrée
       if (!roundInputHistory[round - 1]) {
         roundInputHistory[round - 1] = players.map(() => null);
       }
@@ -1194,42 +1200,72 @@
         return td;
       }
 
-      // Joueurs en colonnes, manches en lignes
+      // Joueurs en lignes, manches en colonnes, colonne nom sticky
       const thead = document.createElement('thead');
       const headerRow = document.createElement('tr');
-      const thRound = document.createElement('th');
-      thRound.textContent = 'Manche';
-      headerRow.appendChild(thRound);
-      players.forEach((p, i) => {
+      const thCorner = document.createElement('th');
+      thCorner.className = 'detail-sticky-col';
+      thCorner.textContent = '';
+      headerRow.appendChild(thCorner);
+      for (let m = 0; m < totalRounds; m++) {
+        if (!roundInputHistory[m]) continue;
         const th = document.createElement('th');
-        th.className = 'player-th';
-        th.style.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
-        th.textContent = p.name;
-        th.title = p.name;
+        th.textContent = m + 1;
+        if (m === round - 1) th.style.color = '#22c55e';
         headerRow.appendChild(th);
-      });
+      }
       thead.appendChild(headerRow);
       table.appendChild(thead);
 
       const tbody = document.createElement('tbody');
-      for (let m = 0; m < totalRounds; m++) {
-        const inputs = roundInputHistory[m];
-        if (!inputs) continue;
-        const scores = roundHistory[m];
-        const isCurrent = (m === round - 1);
+      players.forEach((p, i) => {
         const row = document.createElement('tr');
-        if (isCurrent) row.className = 'current-round';
-        const tdLabel = document.createElement('td');
-        tdLabel.className = 'round-label';
-        tdLabel.textContent = m + 1;
-        row.appendChild(tdLabel);
-        players.forEach((_, i) => {
-          row.appendChild(deltaCell(inputs[i], scores ? scores[i] : null));
-        });
+        const tdName = document.createElement('td');
+        tdName.className = 'detail-sticky-col';
+        tdName.style.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+        tdName.textContent = p.name;
+        tdName.title = p.name;
+        row.appendChild(tdName);
+        for (let m = 0; m < totalRounds; m++) {
+          const inputs = roundInputHistory[m];
+          if (!inputs) continue;
+          const scores = roundHistory[m];
+          const td = deltaCell(inputs[i], scores ? scores[i] : null);
+          if (m === round - 1) td.style.background = 'rgba(34,197,94,.08)';
+          row.appendChild(td);
+        }
         tbody.appendChild(row);
-      }
+      });
       table.appendChild(tbody);
+
+      scrollCurrentRoundIntoView();
     }
+
+    function scrollCurrentRoundIntoView() {
+      const body = document.getElementById('detailBody');
+      if (!body || !body.classList.contains('open')) return;
+      const wrap = body.querySelector('.detail-scroll-wrap');
+      if (!wrap) return;
+      const table = document.getElementById('detailTable');
+      if (!table) return;
+      const headerCells = table.querySelectorAll('thead th');
+      const targetCell = headerCells[round]; // 0=sticky nom, 1=manche1...
+      if (!targetCell) return;
+      const wrapRect = wrap.getBoundingClientRect();
+      const cellRect = targetCell.getBoundingClientRect();
+      const cellLeft = cellRect.left - wrapRect.left + wrap.scrollLeft;
+      const cellCenter = cellLeft - wrap.clientWidth / 2 + cellRect.width / 2;
+      wrap.scrollTo({ left: Math.max(0, cellCenter), behavior: 'smooth' });
+    }
+
+    document.getElementById('detailToggle').addEventListener('click', () => {
+      const body = document.getElementById('detailBody');
+      const chevron = document.getElementById('detailChevron');
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      chevron.classList.toggle('open', !isOpen);
+      if (!isOpen) updateDetailTable();
+    });
 
     renderPlayerInputs();
     renderValueButtons();
