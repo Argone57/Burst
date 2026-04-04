@@ -389,13 +389,14 @@
       .players-grid{grid-template-columns:1fr}
       .leaderboard-item{font-size:.85rem; padding:4px 6px}
     }
-    .detail-section{
-      margin-top:12px;
-      background:rgba(15,23,42,.72);
-      border:1px solid rgba(51,65,85,.9);
-      border-radius:var(--radius);
-      padding:0;
-    }
+.detail-section{
+  margin-top:12px;
+  background:rgba(15,23,42,.72);
+  border:1px solid rgba(51,65,85,.9);
+  border-radius:var(--radius);
+  padding:0;
+  overflow:hidden; /* 🔥 clé du fix */
+}
     .detail-title{
       display:flex;
       justify-content:space-between;
@@ -413,21 +414,12 @@
     .detail-body{display:none; padding:0 12px 12px}
     .detail-body.open{display:block}
     .detail-scroll-wrap{
-      overflow-x:auto;
-      -webkit-overflow-scrolling:touch;
-      scrollbar-width:thin;
-      scrollbar-color:rgba(100,116,139,.6) transparent;
     }
-    .detail-scroll-wrap::-webkit-scrollbar{height:6px}
-    .detail-scroll-wrap::-webkit-scrollbar-track{background:rgba(15,23,42,.4); border-radius:3px}
-    .detail-scroll-wrap::-webkit-scrollbar-thumb{background:rgba(100,116,139,.6); border-radius:3px}
-    .detail-table{
-      width:max-content;
-      min-width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      font-size:.82rem;
-    }
+.detail-table{
+  width:max-content;
+  min-width:100%;
+  border-collapse:collapse;
+}
     .detail-table th{
       padding:6px 8px;
       text-align:center;
@@ -541,9 +533,9 @@
             <span class="detail-chevron" id="detailChevron">▶</span>
           </div>
           <div class="detail-body" id="detailBody">
-            <div class="detail-scroll-wrap">
+            
               <table class="detail-table" id="detailTable"></table>
-            </div>
+            
           </div>
         </div>
       </div>
@@ -900,7 +892,16 @@
         `;
         playersGrid.appendChild(card);
         const input = card.querySelector(`#round-${index}`);
-        input.addEventListener('focus', () => input.select());
+        input.addEventListener('focus', () => {
+  input.select();
+  setTimeout(() => {
+    input.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+      inline: 'nearest'
+    });
+  }, 250);
+});
         input.addEventListener('input', () => {
           const val = parseInt(input.value, 10);
           const el = document.getElementById(`score-${index}`);
@@ -1241,22 +1242,34 @@
       scrollCurrentRoundIntoView();
     }
 
-    function scrollCurrentRoundIntoView() {
-      const body = document.getElementById('detailBody');
-      if (!body || !body.classList.contains('open')) return;
-      const wrap = body.querySelector('.detail-scroll-wrap');
-      if (!wrap) return;
-      const table = document.getElementById('detailTable');
-      if (!table) return;
-      const headerCells = table.querySelectorAll('thead th');
-      const targetCell = headerCells[round]; // 0=sticky nom, 1=manche1...
-      if (!targetCell) return;
-      const wrapRect = wrap.getBoundingClientRect();
-      const cellRect = targetCell.getBoundingClientRect();
-      const cellLeft = cellRect.left - wrapRect.left + wrap.scrollLeft;
-      const cellCenter = cellLeft - wrap.clientWidth / 2 + cellRect.width / 2;
-      wrap.scrollTo({ left: Math.max(0, cellCenter), behavior: 'smooth' });
-    }
+function scrollCurrentRoundIntoView() {
+  const body = document.getElementById('detailBody');
+  if (!body || !body.classList.contains('open')) return;
+
+  const wrap = body.querySelector('.detail-scroll-wrap');
+  if (!wrap) return;
+
+  const table = document.getElementById('detailTable');
+  if (!table) return;
+
+  const headerCells = table.querySelectorAll('thead th');
+  const targetCell = headerCells[round]; // 0 = colonne noms, 1 = manche 1, etc.
+  if (!targetCell) return;
+
+  const stickyCol = table.querySelector('thead .detail-sticky-col');
+  const stickyWidth = stickyCol ? stickyCol.getBoundingClientRect().width : 0;
+
+  const wrapRect = wrap.getBoundingClientRect();
+  const cellRect = targetCell.getBoundingClientRect();
+  const cellLeft = cellRect.left - wrapRect.left + wrap.scrollLeft;
+  const visibleWidth = wrap.clientWidth - stickyWidth;
+  const targetLeft = cellLeft - stickyWidth - Math.max(0, (visibleWidth - cellRect.width) / 2);
+
+  wrap.scrollTo({
+    left: Math.max(0, targetLeft),
+    behavior: 'smooth'
+  });
+}
 
     document.getElementById('detailToggle').addEventListener('click', () => {
       const body = document.getElementById('detailBody');
