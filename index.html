@@ -28,7 +28,7 @@
       color:var(--text);
       font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
     }
-    body{min-height:100dvh}
+    body{overflow-x:hidden; min-height:100dvh}
     .app{
       width:min(1200px,100%);
       margin:0 auto;
@@ -106,39 +106,39 @@
       border-radius:var(--radius);
       padding:12px;
     }
-    .topbar{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:10px}
+    .topbar{display:flex; justify-content:space-evenly; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px}
     .pill{
       display:inline-flex;
       align-items:center;
       gap:8px;
       padding:8px 12px;
       border-radius:999px;
-      background:rgba(2,6,23,.35);
-      border:1px solid rgba(51,65,85,.95);
+      background:transparent;
+      border:none;
       font-weight:800;
+      font-size:1.05rem;
       cursor:pointer;
+      color:#e5e7eb;
     }
-    .pill:hover{background:rgba(51,65,85,.4)}
+    .pill:hover{background:rgba(51,65,85,.2)}
     .chrono-btn{
-      min-width:90px;
-      padding:10px 16px;
-      border-radius:14px;
-      background:rgba(2,6,23,.5);
-      border:1px solid rgba(51,65,85,.95);
+      padding:8px 12px;
+      border-radius:999px;
+      background:transparent;
+      border:none;
       color:#e5e7eb;
       font-size:1.05rem;
-      font-weight:900;
+      font-weight:800;
       cursor:pointer;
       touch-action:manipulation;
-      letter-spacing:.03em;
     }
     .chrono-btn.paused{
       color:#facc15;
       border-color:rgba(250,204,21,.4);
     }
     .total-box{
-      min-width:110px;
-      padding:10px 14px;
+      min-width:60px;
+      padding:8px 14px;
       border-radius:14px;
       background:linear-gradient(135deg,#1d4ed8,#0f766e);
       color:white;
@@ -146,10 +146,32 @@
       font-weight:900;
       text-align:center;
     }
-    .river-total-hot {
-      color: #ef4444 !important;
-      font-size: 3em;
-      animation: riverShake 0.18s linear infinite;
+    .river-total-hot{
+      color:#ef4444 !important;
+      font-size:3em;
+      animation:riverShake .18s linear infinite;
+    }
+    .river-dir-btn{
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      background:rgba(2,6,23,.35);
+      border:2px solid #22c55e;
+      font-size:1.5rem;
+      cursor:pointer;
+      color:#22c55e;
+      touch-action:manipulation;
+      transition:color .2s, border-color .2s, transform .3s;
+      line-height:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-shrink:0;
+    }
+    .river-dir-btn.reverse{
+      color:#ef4444;
+      border-color:#ef4444;
+      transform:scaleX(-1);
     }
     @keyframes riverShake {
       0%,100%{transform:translateX(0)}
@@ -278,21 +300,21 @@
     .leaderboard-grid{
       display:grid;
       gap:3px;
-      grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+      grid-template-columns:repeat(auto-fill,minmax(clamp(160px,30vw,280px),1fr));
     }
     .leaderboard-item{
       position:relative;
       display:flex;
       justify-content:space-between;
       align-items:center;
-      padding:5px 8px;
+      padding:16px 18px;
       background:rgba(15,23,42,.6);
       border:1px solid rgba(51,65,85,.5);
-      border-radius:8px;
-      font-size:.82rem;
+      border-radius:12px;
+      font-size:1.3rem;
       font-weight:700;
       overflow:hidden;
-      gap:2px;
+      gap:6px;
     }
     .leaderboard-progress{
       position:absolute;
@@ -308,10 +330,10 @@
     }
     .leaderboard-rank{
       color:var(--accent);
-      width:16px;
+      width:28px;
       text-align:center;
       font-weight:900;
-      font-size:.85rem;
+      font-size:1.3rem;
       flex-shrink:0;
     }
     .leaderboard-name{
@@ -325,9 +347,9 @@
     .leaderboard-score{
       color:#fff;
       font-weight:900;
-      min-width:28px;
+      min-width:50px;
       text-align:right;
-      font-size:.85rem;
+      font-size:1.3rem;
       flex-shrink:0;
     }
     .winner-panel{display:grid; gap:10px}
@@ -387,16 +409,15 @@
       .app{padding:8px; gap:8px}
       .section{padding:10px}
       .players-grid{grid-template-columns:1fr}
-      .leaderboard-item{font-size:.85rem; padding:4px 6px}
+      .leaderboard-item{font-size:.9rem; padding:8px 10px}
     }
-.detail-section{
-  margin-top:12px;
-  background:rgba(15,23,42,.72);
-  border:1px solid rgba(51,65,85,.9);
-  border-radius:var(--radius);
-  padding:0;
-  overflow:hidden; /* 🔥 clé du fix */
-}
+    .detail-section{
+      margin-top:12px;
+      background:rgba(15,23,42,.72);
+      border:1px solid rgba(51,65,85,.9);
+      border-radius:var(--radius);
+      padding:0;
+    }
     .detail-title{
       display:flex;
       justify-content:space-between;
@@ -414,12 +435,21 @@
     .detail-body{display:none; padding:0 12px 12px}
     .detail-body.open{display:block}
     .detail-scroll-wrap{
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(100,116,139,.6) transparent;
     }
-.detail-table{
-  width:max-content;
-  min-width:100%;
-  border-collapse:collapse;
-}
+    .detail-scroll-wrap::-webkit-scrollbar{height:6px}
+    .detail-scroll-wrap::-webkit-scrollbar-track{background:rgba(15,23,42,.4); border-radius:3px}
+    .detail-scroll-wrap::-webkit-scrollbar-thumb{background:rgba(100,116,139,.6); border-radius:3px}
+    .detail-table{
+      width:max-content;
+      min-width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      font-size:.82rem;
+    }
     .detail-table th{
       padding:6px 8px;
       text-align:center;
@@ -492,8 +522,9 @@
         <div class="river-panel">
           <div class="topbar">
             <div class="pill" id="roundPill">Manche <span id="roundNumber">1</span></div>
-            <button class="chrono-btn" id="chronoBtn" type="button">0 min</button>
+            <button class="river-dir-btn" id="riverDirBtn" title="Sens du tour">↻</button>
             <div class="total-box" id="riverTotal">0</div>
+            <button class="chrono-btn" id="chronoBtn" type="button">0 min</button>
           </div>
           <div class="river" id="river"></div>
           <div class="controls" id="valueButtons"></div>
@@ -533,9 +564,9 @@
             <span class="detail-chevron" id="detailChevron">▶</span>
           </div>
           <div class="detail-body" id="detailBody">
-            
+            <div class="detail-scroll-wrap">
               <table class="detail-table" id="detailTable"></table>
-            
+            </div>
           </div>
         </div>
       </div>
@@ -862,7 +893,7 @@
       });
       const total = riverCards.reduce((a, b) => a + b, 0);
       riverTotal.textContent = total;
-      riverTotal.classList.toggle('river-total-hot', total > 21);
+
       renderValueButtons();
     }
 
@@ -892,16 +923,7 @@
         `;
         playersGrid.appendChild(card);
         const input = card.querySelector(`#round-${index}`);
-        input.addEventListener('focus', () => {
-  input.select();
-  setTimeout(() => {
-    input.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
-    });
-  }, 250);
-});
+        input.addEventListener('focus', () => input.select());
         input.addEventListener('input', () => {
           const val = parseInt(input.value, 10);
           const el = document.getElementById(`score-${index}`);
@@ -1179,6 +1201,13 @@
     startGameBtn.onclick = startFromSetup;
     restartSameBtn.onclick = restartSamePlayers;
     backHomeBtn.onclick = backHome;
+    // Sens de la rivière
+    let riverReversed = false;
+    document.getElementById('riverDirBtn').addEventListener('click', () => {
+      riverReversed = !riverReversed;
+      document.getElementById('riverDirBtn').classList.toggle('reverse', riverReversed);
+    });
+
     cancelRoundBtn.onclick = prevRound;
     cancelRoundBtnBottom.onclick = prevRound;
     roundPill.onclick = nextRound;
@@ -1242,34 +1271,22 @@
       scrollCurrentRoundIntoView();
     }
 
-function scrollCurrentRoundIntoView() {
-  const body = document.getElementById('detailBody');
-  if (!body || !body.classList.contains('open')) return;
-
-  const wrap = body.querySelector('.detail-scroll-wrap');
-  if (!wrap) return;
-
-  const table = document.getElementById('detailTable');
-  if (!table) return;
-
-  const headerCells = table.querySelectorAll('thead th');
-  const targetCell = headerCells[round]; // 0 = colonne noms, 1 = manche 1, etc.
-  if (!targetCell) return;
-
-  const stickyCol = table.querySelector('thead .detail-sticky-col');
-  const stickyWidth = stickyCol ? stickyCol.getBoundingClientRect().width : 0;
-
-  const wrapRect = wrap.getBoundingClientRect();
-  const cellRect = targetCell.getBoundingClientRect();
-  const cellLeft = cellRect.left - wrapRect.left + wrap.scrollLeft;
-  const visibleWidth = wrap.clientWidth - stickyWidth;
-  const targetLeft = cellLeft - stickyWidth - Math.max(0, (visibleWidth - cellRect.width) / 2);
-
-  wrap.scrollTo({
-    left: Math.max(0, targetLeft),
-    behavior: 'smooth'
-  });
-}
+    function scrollCurrentRoundIntoView() {
+      const body = document.getElementById('detailBody');
+      if (!body || !body.classList.contains('open')) return;
+      const wrap = body.querySelector('.detail-scroll-wrap');
+      if (!wrap) return;
+      const table = document.getElementById('detailTable');
+      if (!table) return;
+      const headerCells = table.querySelectorAll('thead th');
+      const targetCell = headerCells[round]; // 0=sticky nom, 1=manche1...
+      if (!targetCell) return;
+      const wrapRect = wrap.getBoundingClientRect();
+      const cellRect = targetCell.getBoundingClientRect();
+      const cellLeft = cellRect.left - wrapRect.left + wrap.scrollLeft;
+      const cellCenter = cellLeft - wrap.clientWidth / 2 + cellRect.width / 2;
+      wrap.scrollTo({ left: Math.max(0, cellCenter), behavior: 'smooth' });
+    }
 
     document.getElementById('detailToggle').addEventListener('click', () => {
       const body = document.getElementById('detailBody');
