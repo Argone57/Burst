@@ -904,6 +904,7 @@
       });
       const total = riverCards.reduce((a, b) => a + b, 0);
       riverTotal.textContent = total;
+      riverTotal.classList.toggle('river-total-hot', total > 21);
 
       renderValueButtons();
     }
