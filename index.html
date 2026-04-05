@@ -93,7 +93,7 @@
       grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
       gap:10px;
     }
-    .layout-play{display:grid; gap:12px}
+    .layout-play{display:grid; gap:12px; min-width:0}
     .top-area{
       display:grid;
       grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);
@@ -105,12 +105,15 @@
       border:1px solid rgba(51,65,85,.95);
       border-radius:var(--radius);
       padding:12px;
+      min-width:0;
     }
     .scores-panel{
       background:rgba(15,23,42,.72);
       border:none;
       border-radius:var(--radius);
       padding:0;
+      min-width:0;
+      overflow:hidden;
     }
     .topbar{display:flex; justify-content:space-evenly; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px}
     .pill{
@@ -419,81 +422,26 @@
       .section{padding:10px}
       .players-grid{grid-template-columns:1fr}
     }
-    .detail-section{
-      margin-top:12px;
-      background:rgba(15,23,42,.72);
-      border:1px solid rgba(51,65,85,.9);
-      border-radius:var(--radius);
-      padding:0;
-    }
-    .detail-title{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:12px 16px;
-      cursor:pointer;
-      user-select:none;
-      font-weight:900;
-      font-size:.95rem;
-      color:#94a3b8;
-    }
-    .detail-title:hover{background:rgba(51,65,85,.2)}
-    .detail-chevron{color:#94a3b8; transition:transform .25s; font-size:1rem}
-    .detail-chevron.open{transform:rotate(90deg)}
-    .detail-body{display:none; padding:0 12px 12px}
-    .detail-body.open{display:block}
-    .detail-scroll-wrap{
-      overflow-x:auto;
-      -webkit-overflow-scrolling:touch;
-      scrollbar-width:thin;
-      scrollbar-color:rgba(100,116,139,.6) transparent;
-    }
-    .detail-scroll-wrap::-webkit-scrollbar{height:6px}
-    .detail-scroll-wrap::-webkit-scrollbar-track{background:rgba(15,23,42,.4); border-radius:3px}
-    .detail-scroll-wrap::-webkit-scrollbar-thumb{background:rgba(100,116,139,.6); border-radius:3px}
-    .detail-table{
-      width:max-content;
-      min-width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      font-size:.82rem;
-    }
-    .detail-table th{
-      padding:6px 8px;
-      text-align:center;
-      color:#64748b;
-      font-weight:700;
-      border-bottom:1px solid rgba(51,65,85,.7);
-      position:sticky;
-      top:0;
-      background:rgba(15,23,42,.95);
-      white-space:nowrap;
-    }
-    .detail-table th.player-th{max-width:90px; overflow:hidden; text-overflow:ellipsis}
-    .detail-table td{
-      padding:5px 8px;
-      text-align:center;
-      border-bottom:1px solid rgba(51,65,85,.3);
-      font-weight:700;
-    }
-    .detail-table td.round-label{color:#64748b; font-weight:800; white-space:nowrap; font-variant-numeric:tabular-nums; font-family:ui-monospace,monospace}
-    .detail-sticky-col{
-      position:sticky;
-      left:0;
-      z-index:2;
-      background:rgba(15,23,42,.97);
-      font-weight:800;
-      white-space:nowrap;
-      text-align:left !important;
-      padding-right:12px !important;
-      max-width:110px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-    thead .detail-sticky-col{z-index:3; background:rgba(15,23,42,.97)}
-    .detail-table tr.current-round td{background:rgba(34,197,94,.08); border-bottom:1px solid rgba(34,197,94,.2)}
-    .detail-table tr.current-round td.round-label{color:#22c55e}
-    .detail-table tr:last-child td{border-bottom:none}
+    /* ── Détail des manches ── */
+    #detailSection{margin-top:12px; background:rgba(15,23,42,.72); border:1px solid rgba(51,65,85,.9); border-radius:var(--radius)}
+    #detailToggle{display:flex; justify-content:space-between; align-items:center; padding:12px 16px; cursor:pointer; user-select:none; font-weight:900; font-size:.95rem; color:#94a3b8; border-radius:var(--radius)}
+    #detailToggle:hover{background:rgba(51,65,85,.2)}
+    #detailChevron{transition:transform .25s; font-size:.9rem}
+    #detailChevron.open{transform:rotate(90deg)}
+    #detailBody{display:none; padding:0 0 8px}
+    #detailBody.open{display:block}
+    #detailScroll{overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 12px 4px; scrollbar-width:thin; scrollbar-color:rgba(100,116,139,.5) transparent}
+    #detailScroll::-webkit-scrollbar{height:5px}
+    #detailScroll::-webkit-scrollbar-thumb{background:rgba(100,116,139,.5); border-radius:3px}
+    #detailTable{border-collapse:separate; border-spacing:0; font-size:.82rem; white-space:nowrap}
+    #detailTable th{padding:6px 10px; color:#64748b; font-weight:700; border-bottom:1px solid rgba(51,65,85,.7); text-align:center; white-space:nowrap}
+    #detailTable td{padding:5px 10px; border-bottom:1px solid rgba(51,65,85,.25); font-weight:700; text-align:center}
+    #detailTable tr:last-child td{border-bottom:none}
+    .d-name{text-align:left !important; padding-right:14px !important; position:sticky; left:0; background:rgba(15,23,42,.97); z-index:2; max-width:110px; overflow:hidden; text-overflow:ellipsis}
+    .d-head-corner{position:sticky; left:0; background:rgba(15,23,42,.97); z-index:3}
+    .d-cur td{background:rgba(34,197,94,.08)}
+    .d-cur .d-name,.d-cur .d-label{color:#22c55e}
+    .d-label{color:#64748b; font-weight:800; font-variant-numeric:tabular-nums}
   </style>
 </head>
 <body>
@@ -566,14 +514,14 @@
           <button class="btn btn-neutral" id="cancelRoundBtnBottom">Manche précédente</button>
         </div>
 
-        <div class="detail-section" id="detailSection">
-          <div class="detail-title" id="detailToggle">
+        <div id="detailSection">
+          <div id="detailToggle">
             <span>📋 Détail des manches</span>
-            <span class="detail-chevron" id="detailChevron">▶</span>
+            <span id="detailChevron">▶</span>
           </div>
-          <div class="detail-body" id="detailBody">
-            <div class="detail-scroll-wrap">
-              <table class="detail-table" id="detailTable"></table>
+          <div id="detailBody">
+            <div id="detailScroll">
+              <table id="detailTable"></table>
             </div>
           </div>
         </div>
@@ -1003,8 +951,7 @@
     function updateScoresAndLeaderboard() {
       updateScores();
       updateLeaderboard();
-      const body = document.getElementById('detailBody');
-      if (body && body.classList.contains('open')) updateDetailTable();
+      if (document.getElementById('detailBody')?.classList.contains('open')) updateDetailTable();
     }
 
     function checkWinnerAtEndOfRound() {
@@ -1229,78 +1176,78 @@
     nextRoundBtnBottom.onclick = nextRound;
 
     function updateDetailTable() {
-      const table = document.getElementById('detailTable');
-      if (!table) return;
-      table.innerHTML = '';
-      const totalRounds = roundInputHistory.length;
       if (!roundInputHistory[round - 1]) {
         roundInputHistory[round - 1] = players.map(() => null);
       }
+      const table = document.getElementById('detailTable');
+      if (!table) return;
+      const totalRounds = roundInputHistory.length;
+      table.innerHTML = '';
 
       function deltaCell(v, cumul) {
         const td = document.createElement('td');
-        const deltaStr = (v !== null && v !== undefined) ? (v >= 0 ? '+' + v : String(v)) : '—';
-        const cumulStr = (cumul !== null && cumul !== undefined) ? ` (${cumul})` : '';
-        td.innerHTML = `<span style="color:${v > 0 ? '#4ade80' : v < 0 ? '#f87171' : '#94a3b8'}">${deltaStr}</span><span style="color:#64748b;font-size:.78rem">${cumulStr}</span>`;
+        const s = (v !== null && v !== undefined) ? (v > 0 ? '+'+v : String(v)) : '—';
+        const c = (cumul !== null && cumul !== undefined) ? ' ('+cumul+')' : '';
+        const col = v > 0 ? '#4ade80' : v < 0 ? '#f87171' : '#94a3b8';
+        td.innerHTML = '<span style="color:'+col+'">'+s+'</span>'
+          + (c ? '<span style="color:#64748b;font-size:.75rem">'+c+'</span>' : '');
         return td;
       }
 
-      // Joueurs en lignes, manches en colonnes, colonne nom sticky
+      // THEAD : coin vide sticky + numéros de manche
       const thead = document.createElement('thead');
-      const headerRow = document.createElement('tr');
-      const thCorner = document.createElement('th');
-      thCorner.className = 'detail-sticky-col';
-      thCorner.textContent = '';
-      headerRow.appendChild(thCorner);
+      const hr = document.createElement('tr');
+      const thc = document.createElement('th');
+      thc.className = 'd-head-corner';
+      hr.appendChild(thc);
       for (let m = 0; m < totalRounds; m++) {
         if (!roundInputHistory[m]) continue;
         const th = document.createElement('th');
         th.textContent = m + 1;
         if (m === round - 1) th.style.color = '#22c55e';
-        headerRow.appendChild(th);
+        hr.appendChild(th);
       }
-      thead.appendChild(headerRow);
+      thead.appendChild(hr);
       table.appendChild(thead);
 
+      // TBODY : 1 ligne par joueur
       const tbody = document.createElement('tbody');
       players.forEach((p, i) => {
         const row = document.createElement('tr');
-        const tdName = document.createElement('td');
-        tdName.className = 'detail-sticky-col';
-        tdName.style.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
-        tdName.textContent = p.name;
-        tdName.title = p.name;
-        row.appendChild(tdName);
+        if (i === round - 1) row.className = 'd-cur'; // non utilisé ici mais cohérence
+        const tdN = document.createElement('td');
+        tdN.className = 'd-name';
+        tdN.style.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
+        tdN.textContent = p.name;
+        tdN.title = p.name;
+        row.appendChild(tdN);
         for (let m = 0; m < totalRounds; m++) {
-          const inputs = roundInputHistory[m];
-          if (!inputs) continue;
-          const scores = roundHistory[m];
-          const td = deltaCell(inputs[i], scores ? scores[i] : null);
-          if (m === round - 1) td.style.background = 'rgba(34,197,94,.08)';
+          const inp = roundInputHistory[m];
+          if (!inp) continue;
+          const sc = roundHistory[m];
+          const td = deltaCell(inp[i], sc ? sc[i] : null);
+          if (m === round - 1) {
+            td.style.background = 'rgba(34,197,94,.08)';
+            td.classList.add('d-label');
+          }
           row.appendChild(td);
         }
         tbody.appendChild(row);
       });
       table.appendChild(tbody);
 
-      scrollCurrentRoundIntoView();
-    }
-
-    function scrollCurrentRoundIntoView() {
-      const body = document.getElementById('detailBody');
-      if (!body || !body.classList.contains('open')) return;
-      const wrap = body.querySelector('.detail-scroll-wrap');
-      if (!wrap) return;
-      const table = document.getElementById('detailTable');
-      if (!table) return;
-      const headerCells = table.querySelectorAll('thead th');
-      const targetCell = headerCells[round]; // 0=sticky nom, 1=manche1...
-      if (!targetCell) return;
-      const wrapRect = wrap.getBoundingClientRect();
-      const cellRect = targetCell.getBoundingClientRect();
-      const cellLeft = cellRect.left - wrapRect.left + wrap.scrollLeft;
-      const cellCenter = cellLeft - wrap.clientWidth / 2 + cellRect.width / 2;
-      wrap.scrollTo({ left: Math.max(0, cellCenter), behavior: 'smooth' });
+      // Scroll vers la manche courante
+      setTimeout(() => {
+        const scroll = document.getElementById('detailScroll');
+        if (!scroll) return;
+        const ths = table.querySelectorAll('thead th');
+        const target = ths[round]; // index 0 = coin sticky, 1 = manche 1
+        if (!target) return;
+        const sr = scroll.getBoundingClientRect();
+        const tr = target.getBoundingClientRect();
+        const left = tr.left - sr.left + scroll.scrollLeft - scroll.clientWidth / 2 + tr.width / 2;
+        scroll.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+      }, 50);
     }
 
     document.getElementById('detailToggle').addEventListener('click', () => {
