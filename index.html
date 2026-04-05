@@ -100,11 +100,17 @@
       gap:12px;
       align-items:start;
     }
-    .river-panel,.scores-panel,.winner-panel{
+    .river-panel,.winner-panel{
       background:rgba(15,23,42,.72);
       border:1px solid rgba(51,65,85,.95);
       border-radius:var(--radius);
       padding:12px;
+    }
+    .scores-panel{
+      background:rgba(15,23,42,.72);
+      border:none;
+      border-radius:var(--radius);
+      padding:0;
     }
     .topbar{display:flex; justify-content:space-evenly; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px}
     .pill{
@@ -138,39 +144,43 @@
     }
     .total-box{
       min-width:60px;
-      padding:8px 14px;
-      border-radius:14px;
+      padding:4px 14px;
+      border-radius:10px;
       background:linear-gradient(135deg,#1d4ed8,#0f766e);
       color:white;
-      font-size:clamp(1.3rem,1rem + 1.2vw,1.9rem);
+      font-size:clamp(1.1rem,1rem + 0.8vw,1.5rem);
       font-weight:900;
       text-align:center;
+      line-height:1.4;
     }
     .river-total-hot{
       color:#ef4444 !important;
-      font-size:3em;
+      font-size:2em;
       animation:riverShake .18s linear infinite;
     }
     .river-dir-btn{
-      width:44px;
-      height:44px;
+      width:38px;
+      height:38px;
       border-radius:50%;
-      background:rgba(2,6,23,.35);
-      border:2px solid #22c55e;
-      font-size:1.5rem;
+      background:none;
+      border:none;
+      font-size:2rem;
       cursor:pointer;
       color:#22c55e;
       touch-action:manipulation;
-      transition:color .2s, border-color .2s, transform .3s;
+      transition:color .2s, transform .3s;
       line-height:1;
       display:flex;
       align-items:center;
       justify-content:center;
       flex-shrink:0;
+      filter:drop-shadow(0 0 2px #22c55e88);
+      -webkit-text-stroke:0.5px #22c55e;
     }
     .river-dir-btn.reverse{
       color:#ef4444;
-      border-color:#ef4444;
+      filter:drop-shadow(0 0 2px #ef444488);
+      -webkit-text-stroke:0.5px #ef4444;
       transform:scaleX(-1);
     }
     @keyframes riverShake {
@@ -284,10 +294,9 @@
     .small-add{background:var(--accent)}
     .small-sub{background:var(--danger)}
     .leaderboard-section{
-      background:rgba(15,23,42,.8);
-      border:1px solid rgba(34,197,94,.3);
-      border-radius:14px;
-      padding:12px;
+      background:none;
+      border:none;
+      padding:0;
       margin-bottom:12px;
     }
     .leaderboard-title{
@@ -300,21 +309,21 @@
     .leaderboard-grid{
       display:grid;
       gap:3px;
-      grid-template-columns:repeat(auto-fill,minmax(clamp(160px,30vw,280px),1fr));
+      grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));
     }
     .leaderboard-item{
       position:relative;
       display:flex;
       justify-content:space-between;
       align-items:center;
-      padding:16px 18px;
+      padding:10px 12px;
       background:rgba(15,23,42,.6);
       border:1px solid rgba(51,65,85,.5);
       border-radius:12px;
       font-size:1.3rem;
       font-weight:700;
       overflow:hidden;
-      gap:6px;
+      gap:4px;
     }
     .leaderboard-progress{
       position:absolute;
@@ -330,7 +339,7 @@
     }
     .leaderboard-rank{
       color:var(--accent);
-      width:28px;
+      width:22px;
       text-align:center;
       font-weight:900;
       font-size:1.3rem;
@@ -347,7 +356,7 @@
     .leaderboard-score{
       color:#fff;
       font-weight:900;
-      min-width:50px;
+      min-width:3ch;
       text-align:right;
       font-size:1.3rem;
       flex-shrink:0;
@@ -409,7 +418,6 @@
       .app{padding:8px; gap:8px}
       .section{padding:10px}
       .players-grid{grid-template-columns:1fr}
-      .leaderboard-item{font-size:.9rem; padding:8px 10px}
     }
     .detail-section{
       margin-top:12px;
@@ -923,16 +931,7 @@
         `;
         playersGrid.appendChild(card);
         const input = card.querySelector(`#round-${index}`);
-        input.addEventListener('focus', () => {
-  input.select();
-  setTimeout(() => {
-    input.scrollIntoView({
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
-    });
-  }, 250);
-});
+        input.addEventListener('focus', () => input.select());
         input.addEventListener('input', () => {
           const val = parseInt(input.value, 10);
           const el = document.getElementById(`score-${index}`);
