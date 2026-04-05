@@ -589,7 +589,7 @@
     let knownPlayers = JSON.parse(localStorage.getItem('burst_known_players') || '[]');
     let knownPlayersUsage = JSON.parse(localStorage.getItem('burst_known_usage') || '{}');
     let trashMode = false;
-    let sortByRecent = false;
+    let sortByRecent = true;
     let leaderboardSortAlpha = false;
     const PLAYER_COLORS = ["#60a5fa", "#f472b6", "#facc15", "#ffffff", "#fb923c", "#a78bfa"];
 
@@ -1036,6 +1036,8 @@
         roundInputHistory[round - 1] = players.map(() => null);
       }
       riverCards = [];
+      riverReversed = false;
+      document.getElementById('riverDirBtn').classList.remove('reverse');
       updateRiver();
       renderPlayers();
       updateScoresAndLeaderboard();
