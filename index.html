@@ -162,12 +162,14 @@
       animation:riverShake .18s linear infinite;
     }
     .river-dir-btn{
-      width:38px;
-      height:38px;
+      width:auto;
+      height:auto;
+      align-self:stretch;
+      aspect-ratio:1;
       border-radius:50%;
       background:none;
       border:none;
-      font-size:2rem;
+      font-size:2.2rem;
       cursor:pointer;
       color:#22c55e;
       touch-action:manipulation;
@@ -439,8 +441,6 @@
     #detailTable tr:last-child td{border-bottom:none}
     .d-name{text-align:left !important; padding-left:12px !important; padding-right:14px !important; position:sticky; left:0; background:rgba(15,23,42,.97); z-index:2; max-width:120px; overflow:hidden; text-overflow:ellipsis; box-shadow:2px 0 6px rgba(0,0,0,.4)}
     .d-head-corner{position:sticky; left:0; background:rgba(15,23,42,.97); z-index:3; padding-left:12px !important; box-shadow:2px 0 6px rgba(0,0,0,.4)}
-    .d-cur td{background:rgba(34,197,94,.08)}
-    .d-cur .d-name,.d-cur .d-label{color:#22c55e}
     .d-label{color:#64748b; font-weight:800; font-variant-numeric:tabular-nums}
   </style>
 </head>
@@ -1032,12 +1032,12 @@
       roundNumber.textContent = round;
       gameStatus.textContent = `Manche ${round - 1} terminée. Manche ${round} en cours.`;
       // Créer la ligne de la nouvelle manche si elle n'existe pas déjà
-      if (!roundInputHistory[round - 1]) {
+      const isNewRound = !roundInputHistory[round - 1];
+      if (isNewRound) {
         roundInputHistory[round - 1] = players.map(() => null);
       }
       riverCards = [];
-      riverReversed = false;
-      document.getElementById('riverDirBtn').classList.remove('reverse');
+      if (isNewRound) applyRoundDirection();
       updateRiver();
       renderPlayers();
       updateScoresAndLeaderboard();
@@ -1165,12 +1165,17 @@
     startGameBtn.onclick = startFromSetup;
     restartSameBtn.onclick = restartSamePlayers;
     backHomeBtn.onclick = backHome;
-    // Sens de la rivière
+    // Sens de la rivière — persiste entre les manches, remis à zéro seulement à la nouvelle manche
     let riverReversed = false;
     document.getElementById('riverDirBtn').addEventListener('click', () => {
       riverReversed = !riverReversed;
       document.getElementById('riverDirBtn').classList.toggle('reverse', riverReversed);
     });
+    function applyRoundDirection() {
+      // ne fait rien lors de la navigation — appelé seulement depuis nextRound
+      riverReversed = false;
+      document.getElementById('riverDirBtn').classList.remove('reverse');
+    }
 
     cancelRoundBtn.onclick = prevRound;
     cancelRoundBtnBottom.onclick = prevRound;
@@ -1216,7 +1221,6 @@
       const tbody = document.createElement('tbody');
       players.forEach((p, i) => {
         const row = document.createElement('tr');
-        if (i === round - 1) row.className = 'd-cur'; // non utilisé ici mais cohérence
         const tdN = document.createElement('td');
         tdN.className = 'd-name';
         tdN.style.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
